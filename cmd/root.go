@@ -86,8 +86,8 @@ func init() {
 	rootCmd.PersistentFlags().StringP("app-token", "A", "", "The app token used to authenticate the request")
 	viper.BindPFlag("app-token", rootCmd.PersistentFlags().Lookup("app-token"))
 
-	rootCmd.Flags().StringP("table-id", "t", "", "The table to get records from")
-	viper.BindPFlag("table-id", rootCmd.Flags().Lookup("table-id"))
+	rootCmd.PersistentFlags().StringP("table-id", "t", "", "The table to get records from")
+	viper.BindPFlag("table-id", rootCmd.PersistentFlags().Lookup("table-id"))
 
 	rootCmd.Flags().StringP("query", "q", "", "The query to get records from the table")
 	viper.BindPFlag("query", rootCmd.Flags().Lookup("query"))

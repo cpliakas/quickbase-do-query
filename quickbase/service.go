@@ -140,3 +140,15 @@ type DoQueryOutput_Record_Field struct {
 	FieldID int    `xml:"id,attr"`
 	Value   string `xml:",chardata"`
 }
+
+type GetSchemaInput struct {
+	XMLName   xml.Name `xml:"qdbapi"`
+	UserToken string   `xml:"usertoken,omitempty"`
+	Ticket    string   `xml:"ticket,omitempty"`
+	AppToken  string   `xml:"apptoken,omitempty"`
+	TableID   string   `xml:"-"`
+}
+
+type GetSchemaOutput struct {
+	Fields []DoQueryOutput_Field `xml:"table>fields>field"`
+}
