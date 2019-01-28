@@ -14,7 +14,7 @@ import (
 // TODO: Replace panics with ba better error handling mechanism.
 var rootCmd = &cobra.Command{
 	Use:   "quickbase-do-query",
-	Short: "Command line tool for Customer Success Engineering",
+	Short: "A command line tool that gets records from a Quick Base table.",
 	Long:  ``,
 	Run: func(cmd *cobra.Command, args []string) {
 
