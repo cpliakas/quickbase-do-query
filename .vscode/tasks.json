@@ -1,0 +1,16 @@
+{
+	"version": "2.0.0",	
+	"type": "shell",	
+	"echoCommand": true,
+	"cwd": "${workspaceFolder}",
+	"tasks": [
+		{
+			"label": "install",
+			"command": "go install",
+			"group": {
+				"kind": "build",
+				"isDefault": true
+			}
+		},		
+	]
+}
