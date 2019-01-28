@@ -9,7 +9,7 @@ import (
 	"github.com/spf13/viper"
 )
 
-// TODO: Replace panics with ba better error handling mechanism.
+// TODO: Replace panics with a better error handling mechanism.
 var listFieldsCmd = &cobra.Command{
 	Use:   "list-fields",
 	Short: "Lists fields",

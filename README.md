@@ -32,7 +32,7 @@ You should see output similar to example below:
             "update-id": 1548209252934,
             "fields": {
                 "Match Field": "Find me",
-                "Another Field": "Some value 1",
+                "Another Field": "Some value 1"
             }
         },
         {
@@ -40,9 +40,24 @@ You should see output similar to example below:
             "update-id": 1548194623663,
             "fields": {
                 "Match Field": "Find me",
-                "Another Field": "Some value 1",
+                "Another Field": "Some value 1"
             }
         }
     ]
+}
+```
+
+Can't remember what the numeric field IDs are? Run the following command:
+
+```sh
+quickbase-do-query list-fields --table-id="[TABLE_ID]"
+```
+
+```json
+{
+    "fields": {
+        "7": "Match Field",
+        "8": "Another Field"
+    }
 }
 ```
