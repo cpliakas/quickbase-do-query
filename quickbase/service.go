@@ -2,26 +2,33 @@ package quickbase
 
 import (
 	"encoding/xml"
+	"fmt"
 	"strconv"
 	"strings"
 )
 
 // DoQueryInput models an API_DoQuery request.
 type DoQueryInput struct {
-	XMLName          xml.Name             `xml:"qdbapi"`
-	UserToken        string               `xml:"usertoken,omitempty"`
-	Ticket           string               `xml:"ticket,omitempty"`
-	AppToken         string               `xml:"apptoken,omitempty"`
-	Query            string               `xml:"query,omitempty"`
-	QueryID          int                  `xml:"qid,omitempty"`
-	QueryName        string               `xml:"qname,omitempty"`
-	IncludeRecordIDs BoolToInt            `xml:"includeRids,omitempty"`
-	ReturnPercentage BoolToInt            `xml:"returnpercentage,omitempty"`
-	UseFIDs          BoolToInt            `xml:"useFids,omitempty"`
-	Format           string               `xml:"fmt,omitempty"`
-	FieldList        DoQueryInput_Fields  `xml:"clist,omitempty"`
-	SortList         DoQueryInput_Fields  `xml:"slist,omitempty"`
-	Options          DoQueryInput_Options `xml:"options,omitempty"`
+	XMLName          xml.Name              `xml:"qdbapi"`
+	UserToken        string                `xml:"usertoken,omitempty"`
+	Ticket           string                `xml:"ticket,omitempty"`
+	AppToken         string                `xml:"apptoken,omitempty"`
+	Query            string                `xml:"query,omitempty"`
+	QueryID          int                   `xml:"qid,omitempty"`
+	QueryName        string                `xml:"qname,omitempty"`
+	IncludeRecordIDs BoolToInt             `xml:"includeRids,omitempty"`
+	ReturnPercentage BoolToInt             `xml:"returnpercentage,omitempty"`
+	UseFIDs          BoolToInt             `xml:"useFids,omitempty"`
+	Format           string                `xml:"fmt,omitempty"`
+	FieldList        DoQueryInput_Fields   `xml:"clist,omitempty"`
+	SortList         DoQueryInput_Fields   `xml:"slist,omitempty"`
+	Options          *DoQueryInput_Options `xml:"options,omitempty"`
+}
+
+func (i *DoQueryInput) ensureOptions() {
+	if i.Options == nil {
+		i.Options = &DoQueryInput_Options{}
+	}
 }
 
 // Fields sets the fields that are returned.
@@ -38,30 +45,35 @@ func (i *DoQueryInput) SortBy(fids ...int) *DoQueryInput {
 
 // SortOrder sets the "sortorder" option.
 func (i *DoQueryInput) SortOrder(order ...string) *DoQueryInput {
+	i.ensureOptions()
 	i.Options.SortOrderList = order
 	return i
 }
 
 // Limit sets the "num" option.
 func (i *DoQueryInput) Limit(n int) *DoQueryInput {
+	i.ensureOptions()
 	i.Options.Limit = n
 	return i
 }
 
 // Offset sets the "skp" option.
 func (i *DoQueryInput) Offset(n int) *DoQueryInput {
-	i.Options.Limit = n
+	i.ensureOptions()
+	i.Options.Offset = n
 	return i
 }
 
 // OnlyNew sets the "onlynew" option.
 func (i *DoQueryInput) OnlyNew() *DoQueryInput {
+	i.ensureOptions()
 	i.Options.OnlyNew = true
 	return i
 }
 
 // Unsorted sets the "nosort" option.
 func (i *DoQueryInput) Unsorted() *DoQueryInput {
+	i.ensureOptions()
 	i.Options.Unsorted = true
 	return i
 }
@@ -89,6 +101,7 @@ func (o DoQueryInput_Options) MarshalXML(e *xml.Encoder, start xml.StartElement)
 	opts := []string{}
 
 	if o.Offset > 0 {
+		fmt.Println("OK")
 		opts = append(opts, "skp-"+strconv.Itoa(o.Offset))
 	}
 	if o.Limit > 0 {
