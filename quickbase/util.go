@@ -20,7 +20,7 @@ func (b BoolToInt) MarshalXML(e *xml.Encoder, start xml.StartElement) error {
 	return e.EncodeElement(s, start)
 }
 
-// sliceToString convers a slice of integers into a "." delimited string.
-func sliceToString(v []int) string {
+// FormatFieldIDs convers a slice of field IDs into a "." delimited string.
+func FormatFieldIDs(v []int) string {
 	return strings.Trim(strings.Replace(fmt.Sprint(v), " ", ".", -1), "[]")
 }

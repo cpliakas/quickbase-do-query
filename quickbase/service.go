@@ -2,7 +2,6 @@ package quickbase
 
 import (
 	"encoding/xml"
-	"fmt"
 	"strconv"
 	"strings"
 )
@@ -20,61 +19,57 @@ type DoQueryInput struct {
 	ReturnPercentage BoolToInt             `xml:"returnpercentage,omitempty"`
 	UseFIDs          BoolToInt             `xml:"useFids,omitempty"`
 	Format           string                `xml:"fmt,omitempty"`
-	FieldList        DoQueryInput_Fields   `xml:"clist,omitempty"`
-	SortList         DoQueryInput_Fields   `xml:"slist,omitempty"`
+	FieldSlice       DoQueryInput_Fields   `xml:"clist,omitempty"`
+	SortSlice        DoQueryInput_Fields   `xml:"slist,omitempty"`
 	Options          *DoQueryInput_Options `xml:"options,omitempty"`
 }
 
-func (i *DoQueryInput) ensureOptions() {
+func (i *DoQueryInput) EnsureOptions() *DoQueryInput_Options {
 	if i.Options == nil {
 		i.Options = &DoQueryInput_Options{}
 	}
+	return i.Options
 }
 
 // Fields sets the fields that are returned.
 func (i *DoQueryInput) Fields(fids ...int) *DoQueryInput {
-	i.FieldList = fids
+	i.FieldSlice = fids
 	return i
 }
 
 // SortBy sets the fields to be sorted by.
 func (i *DoQueryInput) SortBy(fids ...int) *DoQueryInput {
-	i.SortList = fids
+	i.SortSlice = fids
 	return i
 }
 
 // SortOrder sets the "sortorder" option.
 func (i *DoQueryInput) SortOrder(order ...string) *DoQueryInput {
-	i.ensureOptions()
-	i.Options.SortOrderList = order
+	i.EnsureOptions().SortOrderSlice = order
 	return i
 }
 
 // Limit sets the "num" option.
 func (i *DoQueryInput) Limit(n int) *DoQueryInput {
-	i.ensureOptions()
-	i.Options.Limit = n
+	i.EnsureOptions().Limit = n
 	return i
 }
 
 // Offset sets the "skp" option.
 func (i *DoQueryInput) Offset(n int) *DoQueryInput {
-	i.ensureOptions()
-	i.Options.Offset = n
+	i.EnsureOptions().Offset = n
 	return i
 }
 
 // OnlyNew sets the "onlynew" option.
 func (i *DoQueryInput) OnlyNew() *DoQueryInput {
-	i.ensureOptions()
-	i.Options.OnlyNew = true
+	i.EnsureOptions().OnlyNew = true
 	return i
 }
 
 // Unsorted sets the "nosort" option.
 func (i *DoQueryInput) Unsorted() *DoQueryInput {
-	i.ensureOptions()
-	i.Options.Unsorted = true
+	i.EnsureOptions().Unsorted = true
 	return i
 }
 
@@ -83,16 +78,16 @@ type DoQueryInput_Fields []int
 
 // MarshalXML converts a list of fields to a "." delimited string.
 func (f DoQueryInput_Fields) MarshalXML(e *xml.Encoder, start xml.StartElement) error {
-	return e.EncodeElement(sliceToString(f), start)
+	return e.EncodeElement(FormatFieldIDs(f), start)
 }
 
 // DoQueryInput_Options models the "options" element in API_DoQuery requests.
 type DoQueryInput_Options struct {
-	SortOrderList []string
-	Limit         int
-	Offset        int
-	OnlyNew       bool
-	Unsorted      bool
+	SortOrderSlice []string
+	Limit          int
+	Offset         int
+	OnlyNew        bool
+	Unsorted       bool
 }
 
 // MarshalXML implements Marshaler.MarshalXML and formats the value of the
@@ -101,14 +96,13 @@ func (o DoQueryInput_Options) MarshalXML(e *xml.Encoder, start xml.StartElement)
 	opts := []string{}
 
 	if o.Offset > 0 {
-		fmt.Println("OK")
 		opts = append(opts, "skp-"+strconv.Itoa(o.Offset))
 	}
 	if o.Limit > 0 {
 		opts = append(opts, "num-"+strconv.Itoa(o.Limit))
 	}
-	if len(o.SortOrderList) > 0 {
-		opts = append(opts, "sortorder-"+strings.Join(o.SortOrderList, ""))
+	if len(o.SortOrderSlice) > 0 {
+		opts = append(opts, "sortorder-"+strings.Join(o.SortOrderSlice, ""))
 	}
 	if o.OnlyNew == true {
 		opts = append(opts, "onlynew")

@@ -22,7 +22,7 @@ Replace `[TABLE_ID]` according to your environment.
 quickbase-do-query --table-id="[TABLE_ID]" --query="{7.EX.'Find me'}"
 ```
 
-You should see output similar to example below:
+You should see output similar to the example below:
 
 ```json
 {

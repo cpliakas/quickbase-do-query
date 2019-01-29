@@ -2,8 +2,11 @@ package cmd
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"os"
+	"regexp"
+	"strconv"
 	"strings"
 
 	"github.com/cpliakas/quickbase-do-query/quickbase"
@@ -30,19 +33,34 @@ var rootCmd = &cobra.Command{
 		}
 
 		in := quickbase.DoQueryInput{}
-		in.Query = viper.GetString("query")
-		in.Offset(viper.GetInt("offset"))
-		in.Limit(viper.GetInt("limit"))
+
+		query := viper.GetString("query")
+		queryID := viper.GetInt("query-id")
+		queryName := viper.GetString("query-name")
+
+		if query == "" {
+			in.Query = query
+		} else if queryID > 0 {
+			in.QueryID = queryID
+		} else if queryName != "" {
+			in.QueryName = queryName
+		}
 
 		// TODO: Support these options.
 		// Unsorted()
 		// OnlyNew()
-		// QueryID
-		// QueryName
 		// ReturnPercentage
 		// Fields()
-		// SortBy()
-		// SortOrder()
+
+		in.Offset(viper.GetInt("offset"))
+		in.Limit(viper.GetInt("limit"))
+
+		sort, order, err := parseSortOption(viper.GetString("sort"))
+		if err != nil {
+			panic(err)
+		}
+		in.SortSlice = sort
+		in.EnsureOptions().SortOrderSlice = order
 
 		out, err := client.DoQuery(in)
 		if err != nil {
@@ -92,11 +110,20 @@ func init() {
 	rootCmd.Flags().StringP("query", "q", "", "The query to get records from the table")
 	viper.BindPFlag("query", rootCmd.Flags().Lookup("query"))
 
+	rootCmd.Flags().StringP("query-id", "i", "", "The ID of the query that gets records from the table")
+	viper.BindPFlag("query-id", rootCmd.Flags().Lookup("query-id"))
+
+	rootCmd.Flags().StringP("query-name", "n", "", "The name of the query that gets records from the table")
+	viper.BindPFlag("query-name", rootCmd.Flags().Lookup("query-name"))
+
 	rootCmd.Flags().IntP("limit", "l", 25, "The maximum number of records to return")
 	viper.BindPFlag("limit", rootCmd.Flags().Lookup("limit"))
 
 	rootCmd.Flags().IntP("offset", "o", 0, "The number of records to skip")
 	viper.BindPFlag("offset", rootCmd.Flags().Lookup("offset"))
+
+	rootCmd.Flags().StringP("sort", "s", "", "A comma-delimited list of fields to sort by")
+	viper.BindPFlag("sort", rootCmd.Flags().Lookup("sort"))
 
 	viper.ReadInConfig()
 }
@@ -136,9 +163,49 @@ type RecordsRenderedJSON struct {
 	Records []RecordRenderedJSON `json:"records"`
 }
 
-// RecordRenderedJSON a record in JSON
+// RecordRenderedJSON a record in JSON.
 type RecordRenderedJSON struct {
 	RecordID int                    `json:"record-id"`
 	UpdateID int                    `json:"update-id"`
 	Fields   map[string]interface{} `json:"fields"`
+}
+
+// ParseSortOption parses the sort option passed through the command line.
+//
+// The first two parameters are fids to sort on and flow (e.g. A,D) respectively.
+func parseSortOption(sortStr string) ([]int, []string, error) {
+	if sortStr == "" {
+		return []int{}, []string{}, nil
+	}
+
+	parts := strings.Split(sortStr, ",")
+	sort := make([]int, len(parts))
+	order := make([]string, len(parts))
+
+	re := regexp.MustCompile(`^([0-9]+)\s*(D|A|DESC|ASC)?$`)
+	for k, part := range parts {
+
+		match := re.FindStringSubmatch(part)
+		if len(match) == 0 {
+			// TODO: Invalid input error instead of generic.
+			return []int{}, []string{}, errors.New("invalid input")
+		}
+
+		fid, err := strconv.Atoi(match[1])
+		if err != nil {
+			// TODO: Invalid input error instead of generic.
+			return []int{}, []string{}, errors.New("invalid field ID")
+		}
+		sort[k] = fid
+
+		// TODO: Validate whether match[2] exists?
+		order[k] = match[2]
+		if order[k] == "DESC" || order[k] == "D" {
+			order[k] = "D"
+		} else {
+			order[k] = "A"
+		}
+	}
+
+	return sort, order, nil
 }
