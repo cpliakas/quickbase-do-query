@@ -50,7 +50,12 @@ var rootCmd = &cobra.Command{
 		// Unsorted()
 		// OnlyNew()
 		// ReturnPercentage
-		// Fields()
+
+		fields, err := parseFieldsOption(viper.GetString("fields"))
+		if err != nil {
+			panic(err)
+		}
+		in.FieldSlice = fields
 
 		in.Offset(viper.GetInt("offset"))
 		in.Limit(viper.GetInt("limit"))
@@ -116,6 +121,9 @@ func init() {
 	rootCmd.Flags().StringP("query-name", "n", "", "The name of the query that gets records from the table")
 	viper.BindPFlag("query-name", rootCmd.Flags().Lookup("query-name"))
 
+	rootCmd.Flags().StringP("fields", "f", "", "The fields to return from the table")
+	viper.BindPFlag("fields", rootCmd.Flags().Lookup("fields"))
+
 	rootCmd.Flags().IntP("limit", "l", 25, "The maximum number of records to return")
 	viper.BindPFlag("limit", rootCmd.Flags().Lookup("limit"))
 
@@ -170,7 +178,29 @@ type RecordRenderedJSON struct {
 	Fields   map[string]interface{} `json:"fields"`
 }
 
-// ParseSortOption parses the sort option passed through the command line.
+// parseFieldsOption parses the sort option passed through the command line.
+func parseFieldsOption(fieldsStr string) ([]int, error) {
+	if fieldsStr == "" {
+		return []int{}, nil
+	}
+
+	// TODO: Replace wth regex to allow for spaces after comma.
+	parts := strings.Split(fieldsStr, ",")
+	fields := make([]int, len(parts))
+
+	for k, part := range parts {
+		fid, err := strconv.Atoi(part)
+		if err != nil {
+			// TODO: Invalid input error instead of generic.
+			return []int{}, errors.New("invalid field ID")
+		}
+		fields[k] = fid
+	}
+
+	return fields, nil
+}
+
+// parseSortOption parses the sort option passed through the command line.
 //
 // The first two parameters are fids to sort on and flow (e.g. A,D) respectively.
 func parseSortOption(sortStr string) ([]int, []string, error) {
@@ -178,6 +208,7 @@ func parseSortOption(sortStr string) ([]int, []string, error) {
 		return []int{}, []string{}, nil
 	}
 
+	// TODO: Replace wth regex to allow for spaces after comma.
 	parts := strings.Split(sortStr, ",")
 	sort := make([]int, len(parts))
 	order := make([]string, len(parts))
