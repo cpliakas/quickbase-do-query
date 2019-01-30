@@ -38,7 +38,7 @@ var rootCmd = &cobra.Command{
 		queryID := viper.GetInt("query-id")
 		queryName := viper.GetString("query-name")
 
-		if query == "" {
+		if query != "" {
 			in.Query = query
 		} else if queryID > 0 {
 			in.QueryID = queryID
