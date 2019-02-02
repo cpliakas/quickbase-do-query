@@ -50,7 +50,7 @@ You should see output similar to the example below:
 Can't remember what the numeric field IDs are? Run the following command:
 
 ```sh
-quickbase-do-query list-fields --table-id="[TABLE_ID]"
+quickbase-do-query field list --table-id="[TABLE_ID]"
 ```
 
 ```json

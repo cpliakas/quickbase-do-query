@@ -10,8 +10,8 @@ import (
 )
 
 // TODO: Replace panics with a better error handling mechanism.
-var listFieldsCmd = &cobra.Command{
-	Use:   "list-fields",
+var fieldListCmd = &cobra.Command{
+	Use:   "list",
 	Short: "Lists fields",
 	Long:  ``,
 	Run: func(cmd *cobra.Command, args []string) {
@@ -44,7 +44,7 @@ var listFieldsCmd = &cobra.Command{
 }
 
 func init() {
-	rootCmd.AddCommand(listFieldsCmd)
+	fieldCmd.AddCommand(fieldListCmd)
 }
 
 func formatFields(out quickbase.GetSchemaOutput) (string, error) {
