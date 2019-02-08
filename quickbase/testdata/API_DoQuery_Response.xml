@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<qdbapi>
+   <action>API_DoQuery</action>
+   <errcode>0</errcode>
+   <errtext>No error</errtext>
+   <qid>-1</qid>
+   <qname />
+   <table>
+      <name>Records</name>
+      <desc>A table containing generic records.</desc>
+      <original>
+         <table_id>bpdhfphi2</table_id>
+         <app_id>bpdhfngx3</app_id>
+         <cre_date>1549648909242</cre_date>
+         <mod_date>1549648954619</mod_date>
+         <next_record_id>3</next_record_id>
+         <next_field_id>8</next_field_id>
+         <next_query_id>5</next_query_id>
+         <def_sort_fid>2</def_sort_fid>
+         <def_sort_order>0</def_sort_order>
+         <key_fid>3</key_fid>
+         <single_record_name>Record</single_record_name>
+         <plural_record_name>Records</plural_record_name>
+      </original>
+      <queries>
+         <query id="1">
+            <qyname>List All</qyname>
+            <qytype>table</qytype>
+            <qycrit>{0.CT.''}</qycrit>
+            <qyopts>nos.qws.</qyopts>
+            <qycalst>0.0</qycalst>
+         </query>
+         <query id="2">
+            <qyname>List Changes</qyname>
+            <qytype>table</qytype>
+            <qydesc>Sorted by Date Modified</qydesc>
+            <qycrit>{0.CT.''}</qycrit>
+            <qyslst>2</qyslst>
+            <qyopts>so-D.onlynew.nos.qws.</qyopts>
+            <qycalst>0.0</qycalst>
+         </query>
+      </queries>
+      <fields>
+         <field id="7" field_type="date" base_type="int64">
+            <label>Date Field</label>
+            <nowrap>1</nowrap>
+            <bold>0</bold>
+            <required>0</required>
+            <appears_by_default>1</appears_by_default>
+            <find_enabled>1</find_enabled>
+            <allow_new_choices>0</allow_new_choices>
+            <sort_as_given>1</sort_as_given>
+            <carrychoices>1</carrychoices>
+            <foreignkey>0</foreignkey>
+            <unique>0</unique>
+            <doesdatacopy>1</doesdatacopy>
+            <fieldhelp />
+            <audited>0</audited>
+            <display_time>0</display_time>
+            <display_relative>0</display_relative>
+            <display_month>number</display_month>
+            <default_today>0</default_today>
+            <display_dow>0</display_dow>
+            <display_zone>0</display_zone>
+         </field>
+         <field id="6" field_type="float" base_type="float">
+            <label>Number Field</label>
+            <nowrap>1</nowrap>
+            <bold>0</bold>
+            <required>0</required>
+            <appears_by_default>1</appears_by_default>
+            <find_enabled>0</find_enabled>
+            <allow_new_choices>0</allow_new_choices>
+            <sort_as_given>1</sort_as_given>
+            <carrychoices>1</carrychoices>
+            <foreignkey>0</foreignkey>
+            <unique>0</unique>
+            <doesdatacopy>1</doesdatacopy>
+            <fieldhelp />
+            <audited>0</audited>
+            <comma_start>4</comma_start>
+            <numberfmt>0</numberfmt>
+            <does_average>0</does_average>
+            <does_total>1</does_total>
+            <blank_is_zero>1</blank_is_zero>
+         </field>
+      </fields>
+      <lastluserid>0</lastluserid>
+      <records>
+         <record rid="2">
+            <f id="7">1546300800000</f>
+            <f id="6">21</f>
+            <update_id>1549648954619</update_id>
+         </record>
+         <record rid="1">
+            <f id="7">1550707200000</f>
+            <f id="6">23</f>
+            <update_id>1549648946150</update_id>
+         </record>
+      </records>
+   </table>
+</qdbapi>

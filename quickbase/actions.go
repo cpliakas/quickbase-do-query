@@ -261,3 +261,43 @@ func (c Client) GetSchema(input *GetSchemaInput) (output GetSchemaOutput, err er
 	}
 	return
 }
+
+// SetVariableInput models the request sent to API_SetDBvar
+// See https://help.quickbase.com/api-guide/setdbvar.html
+type SetVariableInput struct {
+	RequestParams
+	Credentials
+
+	AppID string `xml:"-"`
+	Name  string `xml:"varname"`
+	Value string `xml:"value"`
+}
+
+func (input *SetVariableInput) setCredentials(creds Credentials) { input.Credentials = creds }
+func (input *SetVariableInput) method() string                   { return http.MethodPost }
+func (input *SetVariableInput) uri() string                      { return "/db/" + input.AppID }
+func (input *SetVariableInput) payload() ([]byte, error)         { return xml.Marshal(input) }
+func (input *SetVariableInput) headers(req *http.Request) {
+	req.Header.Set("Content-Type", "application/xml")
+	req.Header.Set("QUICKBASE-ACTION", "API_SetDBvar")
+}
+
+// SetVariableOutput models the response returned by API_SetDBvar
+// See https://help.quickbase.com/api-guide/setdbvar.html
+type SetVariableOutput struct {
+	ResponseParams
+}
+
+func (output *SetVariableOutput) parse(body []byte, res *http.Response) error {
+	return parseXML(output, body, res)
+}
+
+// SetVariable makes an API_SetDBvar call.
+// See https://help.quickbase.com/api-guide/setdbvar.html
+func (c Client) SetVariable(input *SetVariableInput) (output SetVariableOutput, err error) {
+	err = c.Do(input, &output)
+	if err == nil && output.ErrorCode != 0 {
+		err = fmt.Errorf("error executing API_SetDBvar: %s (error code: %v)", output.ErrorText, output.ErrorCode)
+	}
+	return
+}
