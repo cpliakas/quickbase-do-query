@@ -21,29 +21,22 @@ var rootCmd = &cobra.Command{
 	Long:  ``,
 	Run: func(cmd *cobra.Command, args []string) {
 
-		config := &quickbase.Config{
-			RealmHost: viper.GetString("realm-host"),
-			AppID:     viper.GetString("app-id"),
-			UserToken: viper.GetString("user-token"),
-		}
+		cfg := quickbase.NewConfig()
+		client := quickbase.NewClient(cfg)
 
-		client := &quickbase.Client{
-			Config:  config,
-			TableID: viper.GetString("table-id"),
-		}
-
-		in := quickbase.DoQueryInput{}
+		input := &quickbase.DoQueryInput{}
+		input.TableID = viper.GetString("table-id")
 
 		query := viper.GetString("query")
 		queryID := viper.GetInt("query-id")
 		queryName := viper.GetString("query-name")
 
 		if query != "" {
-			in.Query = query
+			input.Query = query
 		} else if queryID > 0 {
-			in.QueryID = queryID
+			input.QueryID = queryID
 		} else if queryName != "" {
-			in.QueryName = queryName
+			input.QueryName = queryName
 		}
 
 		// TODO: Support these options.
@@ -55,24 +48,24 @@ var rootCmd = &cobra.Command{
 		if err != nil {
 			panic(err)
 		}
-		in.FieldSlice = fields
+		input.FieldSlice = fields
 
-		in.Offset(viper.GetInt("offset"))
-		in.Limit(viper.GetInt("limit"))
+		input.Offset(viper.GetInt("offset"))
+		input.Limit(viper.GetInt("limit"))
 
 		sort, order, err := parseSortOption(viper.GetString("sort"))
 		if err != nil {
 			panic(err)
 		}
-		in.SortSlice = sort
-		in.EnsureOptions().SortOrderSlice = order
+		input.SortSlice = sort
+		input.EnsureOptions().SortOrderSlice = order
 
-		out, err := client.DoQuery(in)
+		output, err := client.DoQuery(input)
 		if err != nil {
 			panic(err)
 		}
 
-		s, err := formatRecords(out, false) // @TODO Hijack the UseFIDs in Input.
+		s, err := formatRecords(output, false) // @TODO Hijack the UseFIDs in Input.
 		if err != nil {
 			panic(err)
 		}

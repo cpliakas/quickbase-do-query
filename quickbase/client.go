@@ -2,131 +2,152 @@ package quickbase
 
 import (
 	"bytes"
+	"context"
+	"encoding/json"
 	"encoding/xml"
-	"fmt"
 	"io/ioutil"
 	"net/http"
+	"strconv"
 	"strings"
-	"time"
 )
+
+// Plugin is the interface implemented by plugins that hook into the API
+// request process.
+type Plugin interface {
+
+	// PreRequest is the hook that is invoked prior to the request being
+	// sent to the Quick Base API.
+	PreRequest(context.Context, *http.Request) context.Context
+
+	// PostResponse is the hook invoked after the response is sent from the
+	// Quick Base API. This hook is invoked whether the request was
+	// successful or not.
+	PostResponse(context.Context, *http.Request, *http.Response, []byte, error) context.Context
+}
 
 // Client makes requests to the Quick Base API.
 type Client struct {
-	Config  *Config
-	TableID string
+
+	// config stores the runtime configuration.
+	Config Config
+
+	// The HTTP client to use when sending requests. Defaults to
+	// `http.DefaultClient`.
+	HTTPClient *http.Client
+
+	// Plugins contains the Plugin implementations.
+	Plugins []Plugin
 }
 
-// TODO: Got it working, now DRY it up!
-
-// DoQuery executes an API_DoQuery request.
-func (c *Client) DoQuery(in DoQueryInput) (DoQueryOutput, error) {
-	out := DoQueryOutput{}
-
-	// Add credentials.
-	if c.Config.UserToken != "" {
-		in.UserToken = c.Config.UserToken
-	} else if c.Config.Ticket != "" {
-		in.Ticket = c.Config.Ticket
-		if c.Config.AppToken != "" {
-			in.AppToken = c.Config.AppToken
-		}
+// NewClient returns a Client populated with default values.
+func NewClient(cfg Config) Client {
+	return Client{
+		Config:     cfg,
+		HTTPClient: http.DefaultClient,
 	}
-
-	// Set required parameters.
-	in.Format = "structured"
-	in.IncludeRecordIDs = true
-	in.UseFIDs = false
-
-	// Format the XML payload.
-	payload, err := xml.Marshal(in)
-	if err != nil {
-		return out, err
-	}
-
-	// Build the HTTP request, add required headers.
-	url := fmt.Sprintf("%s/db/%s", strings.TrimRight(c.Config.RealmHost, "/"), c.TableID)
-	req, err := http.NewRequest(http.MethodPost, url, bytes.NewBuffer(payload))
-	if err != nil {
-		return out, err
-	}
-
-	req.Header.Add("QUICKBASE-ACTION", "API_DoQuery")
-	req.Header.Add("Content-Type", "application/xml")
-
-	// Create an http.Client if one isn't set.
-	if c.Config.HTTPClient == nil {
-		c.Config.HTTPClient = &http.Client{
-			Timeout: 5 * time.Second,
-		}
-	}
-
-	// Execute the API request.
-	resp, err := c.Config.HTTPClient.Do(req)
-	if err != nil {
-		return out, err
-	}
-
-	// Parse the response.
-	defer resp.Body.Close()
-	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return out, err
-	}
-
-	err = xml.Unmarshal(body, &out)
-	return out, err
 }
 
-// GetSchema executes an API_GetSchema request.
-func (c *Client) GetSchema(in GetSchemaInput) (GetSchemaOutput, error) {
-	out := GetSchemaOutput{}
+// NewRequest returns a *http.Request initialized with the data needed to
+// make a request to the Quick Base API. In this method, the credentials are
+// set, the Input struct is marshaled into the XML/JSON/HTML payload, and the
+// URL of the action being performed is constructed.
+func (c Client) NewRequest(input Input) (req *http.Request, err error) {
 
-	// Add credentials.
-	if c.Config.UserToken != "" {
-		in.UserToken = c.Config.UserToken
-	} else if c.Config.Ticket != "" {
-		in.Ticket = c.Config.Ticket
-		if c.Config.AppToken != "" {
-			in.AppToken = c.Config.AppToken
-		}
+	if i, ok := input.(AuthenticatedInput); ok {
+		i.setCredentials(NewCredentials(c.Config))
+		input = i
 	}
 
-	// Format the XML payload.
-	payload, err := xml.Marshal(in)
+	b, err := input.payload()
 	if err != nil {
-		return out, err
+		return
 	}
 
-	// Build the HTTP request, add required headers.
-	url := fmt.Sprintf("%s/db/%s", strings.TrimRight(c.Config.RealmHost, "/"), c.TableID)
-	req, err := http.NewRequest(http.MethodPost, url, bytes.NewBuffer(payload))
+	url := strings.TrimRight(c.Config.RealmHost(), "/") + input.uri()
+	req, err = http.NewRequest(input.method(), url, bytes.NewBuffer(b))
 	if err != nil {
-		return out, err
+		return
 	}
 
-	req.Header.Add("QUICKBASE-ACTION", "API_GetSchema")
-	req.Header.Add("Content-Type", "application/xml")
+	input.headers(req)
+	return
+}
 
-	// Create an http.Client if one isn't set.
-	if c.Config.HTTPClient == nil {
-		c.Config.HTTPClient = &http.Client{
-			Timeout: 5 * time.Second,
-		}
-	}
+// Do makes a request to the Quick Base API. This method sets some context
+// about the request, initializes the request via the NewRequest method,
+// invokes each plugins PreRequest method, uses *Client.HTTPClient to make
+// the actual request, invokes each plugin's PostResponse method, then
+// unmarshals the raw response into the passed Output struct.
+func (c Client) Do(input Input, output Output) error {
+	ctx := context.Background()
+	ctx = context.WithValue(ctx, "realm-host", c.Config.RealmHost())
 
-	// Execute the API request.
-	resp, err := c.Config.HTTPClient.Do(req)
+	req, err := c.NewRequest(input)
 	if err != nil {
-		return out, err
+		return err
 	}
 
-	// Parse the response.
-	defer resp.Body.Close()
-	body, err := ioutil.ReadAll(resp.Body)
+	ctx = context.WithValue(ctx, "action", req.Header.Get("QUICKBASE-ACTION"))
+	ctx = c.invokePreRequest(ctx, req)
+
+	res, err := c.HTTPClient.Do(req)
 	if err != nil {
-		return out, err
+		ctx = c.invokePostResponse(ctx, req, res, []byte(""), err)
+		return err
 	}
 
-	err = xml.Unmarshal(body, &out)
-	return out, err
+	defer res.Body.Close()
+	body, err := ioutil.ReadAll(res.Body)
+	ctx = c.invokePostResponse(ctx, req, res, body, err)
+	if err != nil {
+		return err
+	}
+
+	err = output.parse(body, res)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// invokePreRequest invokes each plugin's PreRequest method.
+func (c Client) invokePreRequest(ctx context.Context, req *http.Request) context.Context {
+	for _, p := range c.Plugins {
+		ctx = p.PreRequest(ctx, req)
+	}
+	return ctx
+}
+
+// invokePostResponse invokes each plugin's PostResponse method.
+func (c Client) invokePostResponse(ctx context.Context, req *http.Request, res *http.Response, body []byte, err error) context.Context {
+	for _, p := range c.Plugins {
+		ctx = p.PostResponse(ctx, req, res, body, err)
+	}
+	return ctx
+}
+
+// parseXML parses an XML response, populating output with data.
+func parseXML(output Output, body []byte, res *http.Response) error {
+	return xml.Unmarshal(body, output)
+}
+
+// parseJSON parses a JSON response, populating output with data.
+func parseJSON(output Output, body []byte, res *http.Response) error {
+	return json.Unmarshal(body, output)
+}
+
+// parseHTML parses an HTML response, populating output with data.
+func parseHTML(output HTMLOutput, body []byte, res *http.Response) error {
+
+	c, err := strconv.Atoi(res.Header.Get("QUICKBASE-ERRCODE"))
+	if err != nil {
+		return err
+	}
+
+	output.setErrorCode(c)
+	output.setErrorText(res.Header.Get("QUICKBASE-ERRTEXT"))
+	output.setHtml(body)
+
+	return nil
 }

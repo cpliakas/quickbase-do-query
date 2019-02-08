@@ -16,25 +16,17 @@ var fieldListCmd = &cobra.Command{
 	Long:  ``,
 	Run: func(cmd *cobra.Command, args []string) {
 
-		config := &quickbase.Config{
-			RealmHost: viper.GetString("realm-host"),
-			AppID:     viper.GetString("app-id"),
-			UserToken: viper.GetString("user-token"),
-		}
+		cfg := quickbase.NewConfig()
+		client := quickbase.NewClient(cfg)
 
-		client := &quickbase.Client{
-			Config:  config,
-			TableID: viper.GetString("table-id"),
-		}
+		input := &quickbase.GetSchemaInput{ID: viper.GetString("table-id")}
 
-		in := quickbase.GetSchemaInput{}
-
-		out, err := client.GetSchema(in)
+		output, err := client.GetSchema(input)
 		if err != nil {
 			panic(err)
 		}
 
-		s, err := formatFields(out)
+		s, err := formatFields(output)
 		if err != nil {
 			panic(err)
 		}
