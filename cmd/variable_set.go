@@ -3,7 +3,9 @@ package cmd
 import (
 	"fmt"
 
-	"github.com/cpliakas/quickbase-do-query/quickbase"
+	"github.com/cpliakas/quickbase-do-query/cliutil"
+	"github.com/cpliakas/quickbase-do-query/qbutil"
+	qb "github.com/cpliakas/quickbase-do-query/quickbase"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -13,23 +15,18 @@ var varSetCmd = &cobra.Command{
 	Short: "Sets a database variable",
 	Long:  ``,
 	Run: func(cmd *cobra.Command, args []string) {
-		if len(args) < 2 {
-			panic("required variables missing.")
-		}
+		globalCfg.InitConfig()
+		qbutil.RequireAppID(globalCfg)
 
-		cfg := quickbase.NewConfig()
-		client := quickbase.NewClient(cfg)
-
-		input := &quickbase.SetVariableInput{
+		input := &qb.SetVariableInput{
 			AppID: viper.GetString("app-id"),
 			Name:  args[0],
 			Value: args[1],
 		}
 
+		client := qb.NewClient(globalCfg)
 		_, err := client.SetVariable(input)
-		if err != nil {
-			panic(err)
-		}
+		cliutil.HandleError(err, "error executing request")
 
 		fmt.Printf("variable '%s' set: '%s'\n", args[0], args[1])
 	},

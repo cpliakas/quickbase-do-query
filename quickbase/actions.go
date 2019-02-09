@@ -55,17 +55,17 @@ type DoQueryInput struct {
 	RequestParams
 	Credentials
 
-	TableID          string                `xml:"-"`
-	Query            string                `xml:"query,omitempty"`
-	QueryID          int                   `xml:"qid,omitempty"`
-	QueryName        string                `xml:"qname,omitempty"`
-	IncludeRecordIDs BoolToInt             `xml:"includeRids,omitempty"`
-	ReturnPercentage BoolToInt             `xml:"returnpercentage,omitempty"`
-	UseFIDs          BoolToInt             `xml:"useFids,omitempty"`
-	Format           string                `xml:"fmt,omitempty"`
-	FieldSlice       DoQueryInput_Fields   `xml:"clist,omitempty"`
-	SortSlice        DoQueryInput_Fields   `xml:"slist,omitempty"`
-	Options          *DoQueryInput_Options `xml:"options,omitempty"`
+	TableID          string               `xml:"-"`
+	Query            string               `xml:"query,omitempty"`
+	QueryID          int                  `xml:"qid,omitempty"`
+	QueryName        string               `xml:"qname,omitempty"`
+	IncludeRecordIDs BoolToInt            `xml:"includeRids,omitempty"`
+	ReturnPercentage BoolToInt            `xml:"returnpercentage,omitempty"`
+	UseFIDs          BoolToInt            `xml:"useFids,omitempty"`
+	Format           string               `xml:"fmt,omitempty"`
+	FieldSlice       DoQueryInputFields   `xml:"clist,omitempty"`
+	SortSlice        DoQueryInputFields   `xml:"slist,omitempty"`
+	Options          *DoQueryInputOptions `xml:"options,omitempty"`
 }
 
 func (input *DoQueryInput) setCredentials(creds Credentials) { input.Credentials = creds }
@@ -80,9 +80,9 @@ func (input *DoQueryInput) headers(req *http.Request) {
 // EnsureOptions returns an initialized Options property. This method should be
 // used in favor of accessing the property directly to avoid null pointer
 // exceptions.
-func (i *DoQueryInput) EnsureOptions() *DoQueryInput_Options {
+func (i *DoQueryInput) EnsureOptions() *DoQueryInputOptions {
 	if i.Options == nil {
-		i.Options = &DoQueryInput_Options{}
+		i.Options = &DoQueryInputOptions{}
 	}
 	return i.Options
 }
@@ -101,6 +101,13 @@ func (i *DoQueryInput) SortBy(fids ...int) *DoQueryInput {
 
 // SortOrder sets the "sortorder" option.
 func (i *DoQueryInput) SortOrder(order ...string) *DoQueryInput {
+	i.EnsureOptions().SortOrderSlice = order
+	return i
+}
+
+// Sort sets the fields and order in one shot.
+func (i *DoQueryInput) Sort(sort []int, order []string) *DoQueryInput {
+	i.SortSlice = sort
 	i.EnsureOptions().SortOrderSlice = order
 	return i
 }
@@ -129,16 +136,16 @@ func (i *DoQueryInput) Unsorted() *DoQueryInput {
 	return i
 }
 
-// DoQueryInput_Fields models field lists in API_DoQuery requests.
-type DoQueryInput_Fields []int
+// DoQueryInputFields models field lists in API_DoQuery requests.
+type DoQueryInputFields []int
 
 // MarshalXML converts a list of fields to a "." delimited string.
-func (f DoQueryInput_Fields) MarshalXML(e *xml.Encoder, start xml.StartElement) error {
+func (f DoQueryInputFields) MarshalXML(e *xml.Encoder, start xml.StartElement) error {
 	return e.EncodeElement(FormatFieldIDs(f), start)
 }
 
-// DoQueryInput_Options models the "options" element in API_DoQuery requests.
-type DoQueryInput_Options struct {
+// DoQueryInputOptions models the "options" element in API_DoQuery requests.
+type DoQueryInputOptions struct {
 	SortOrderSlice []string
 	Limit          int
 	Offset         int
@@ -148,7 +155,7 @@ type DoQueryInput_Options struct {
 
 // MarshalXML implements Marshaler.MarshalXML and formats the value of the
 // "options" element.
-func (o DoQueryInput_Options) MarshalXML(e *xml.Encoder, start xml.StartElement) error {
+func (o DoQueryInputOptions) MarshalXML(e *xml.Encoder, start xml.StartElement) error {
 	opts := []string{}
 
 	if o.Offset > 0 {
@@ -175,13 +182,13 @@ func (o DoQueryInput_Options) MarshalXML(e *xml.Encoder, start xml.StartElement)
 type DoQueryOutput struct {
 	ResponseParams
 
-	Fields  []DoQueryOutput_Field  `xml:"table>fields>field"`
-	Records []DoQueryOutput_Record `xml:"table>records>record"`
+	Fields  []DoQueryOutputField  `xml:"table>fields>field"`
+	Records []DoQueryOutputRecord `xml:"table>records>record"`
 }
 
-// DoQueryOutput_Field models the "table>fields" element. in an API_DoQuery
+// DoQueryOutputField models the "table>fields" element. in an API_DoQuery
 // response.
-type DoQueryOutput_Field struct {
+type DoQueryOutputField struct {
 	FieldID  int    `xml:"id,attr"`
 	Type     string `xml:"field_type,attr"`
 	BaseType string `xml:"base_type,attr"`
@@ -189,17 +196,17 @@ type DoQueryOutput_Field struct {
 	Label    string `xml:"label"`
 }
 
-// DoQueryOutput_Record models the "table>records>record" element in an
+// DoQueryOutputRecord models the "table>records>record" element in an
 // API_DoQuery response.
-type DoQueryOutput_Record struct {
-	RecordID int                          `xml:"rid,attr"`
-	UpdateID int                          `xml:"update_id"`
-	Fields   []DoQueryOutput_Record_Field `xml:"f"`
+type DoQueryOutputRecord struct {
+	RecordID int                        `xml:"rid,attr"`
+	UpdateID int                        `xml:"update_id"`
+	Fields   []DoQueryOutputRecordField `xml:"f"`
 }
 
-// DoQueryOutput_Record_Field models the "table>records>record>field" element
+// DoQueryOutputRecordField models the "table>records>record>field" element
 // in an API_DoQuery response.
-type DoQueryOutput_Record_Field struct {
+type DoQueryOutputRecordField struct {
 	FieldID int    `xml:"id,attr"`
 	Value   string `xml:",chardata"`
 }
@@ -245,7 +252,7 @@ func (input *GetSchemaInput) headers(req *http.Request) {
 type GetSchemaOutput struct {
 	ResponseParams
 
-	Fields []DoQueryOutput_Field `xml:"table>fields>field"`
+	Fields []DoQueryOutputField `xml:"table>fields>field"`
 }
 
 func (output *GetSchemaOutput) parse(body []byte, res *http.Response) error {
@@ -298,6 +305,63 @@ func (c Client) SetVariable(input *SetVariableInput) (output SetVariableOutput, 
 	err = c.Do(input, &output)
 	if err == nil && output.ErrorCode != 0 {
 		err = fmt.Errorf("error executing API_SetDBvar: %s (error code: %v)", output.ErrorText, output.ErrorCode)
+	}
+	return
+}
+
+// UploadFileAttachmentInput models the request sent to API_UploadFile
+// See https://help.quickbase.com/api-guide/uploadfile.html
+type UploadFileAttachmentInput struct {
+	RequestParams
+	Credentials
+
+	TableID  string                           `xml:"-"`
+	Fields   []UploadFileAttachmentInputField `xml:"field"`
+	RecordID int                              `xml:"rid"`
+}
+
+func (input *UploadFileAttachmentInput) setCredentials(creds Credentials) { input.Credentials = creds }
+func (input *UploadFileAttachmentInput) method() string                   { return http.MethodPost }
+func (input *UploadFileAttachmentInput) uri() string                      { return "/db/" + input.TableID }
+func (input *UploadFileAttachmentInput) payload() ([]byte, error)         { return xml.Marshal(input) }
+func (input *UploadFileAttachmentInput) headers(req *http.Request) {
+	req.Header.Set("Content-Type", "application/xml")
+	req.Header.Set("QUICKBASE-ACTION", "API_UploadFile")
+}
+
+// UploadFileAttachmentInputField models the "field" element in an
+// API_UploadFile request.
+type UploadFileAttachmentInputField struct {
+	FieldID  int    `xml:"fid,attr"`
+	FileData string `xml:",chardata"`
+	Name     string `xml:"filename,attr"`
+}
+
+// UploadFileAttachmentOutput models the response returned by API_UploadFile
+// See https://help.quickbase.com/api-guide/uploadfile.html
+type UploadFileAttachmentOutput struct {
+	ResponseParams
+
+	Fields []UploadFileAttachmentOutputField `xml:"file_fields>field"`
+}
+
+func (output *UploadFileAttachmentOutput) parse(body []byte, res *http.Response) error {
+	return parseXML(output, body, res)
+}
+
+// UploadFileAttachmentOutputField models the "file_fields>field" element an
+// API_UploadFile response.
+type UploadFileAttachmentOutputField struct {
+	ID  int    `xml:"id,attr"`
+	URL string `xml:"url"`
+}
+
+// UploadFileAttachment makes an API_UploadFile call.
+// See https://help.quickbase.com/api-guide/uploadfile.html
+func (c Client) UploadFileAttachment(input *UploadFileAttachmentInput) (output UploadFileAttachmentOutput, err error) {
+	err = c.Do(input, &output)
+	if err == nil && output.ErrorCode != 0 {
+		err = fmt.Errorf("error executing API_UploadFile: %s (error code: %v)", output.ErrorText, output.ErrorCode)
 	}
 	return
 }

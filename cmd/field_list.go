@@ -4,10 +4,15 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/cpliakas/quickbase-do-query/quickbase"
+	"github.com/cpliakas/quickbase-do-query/qbutil"
+
+	"github.com/cpliakas/quickbase-do-query/cliutil"
+	qb "github.com/cpliakas/quickbase-do-query/quickbase"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
+
+var fieldListCfg *viper.Viper
 
 // TODO: Replace panics with a better error handling mechanism.
 var fieldListCmd = &cobra.Command{
@@ -15,21 +20,17 @@ var fieldListCmd = &cobra.Command{
 	Short: "Lists fields",
 	Long:  ``,
 	Run: func(cmd *cobra.Command, args []string) {
+		globalCfg.InitConfig()
+		qbutil.RequireTableID(globalCfg)
 
-		cfg := quickbase.NewConfig()
-		client := quickbase.NewClient(cfg)
+		input := &qb.GetSchemaInput{ID: globalCfg.TableID()}
 
-		input := &quickbase.GetSchemaInput{ID: viper.GetString("table-id")}
-
+		client := qb.NewClient(globalCfg)
 		output, err := client.GetSchema(input)
-		if err != nil {
-			panic(err)
-		}
+		cliutil.HandleError(err, "error executing request")
 
 		s, err := formatFields(output)
-		if err != nil {
-			panic(err)
-		}
+		cliutil.HandleError(err, "error formatting output")
 
 		fmt.Println(s)
 	},
@@ -37,9 +38,10 @@ var fieldListCmd = &cobra.Command{
 
 func init() {
 	fieldCmd.AddCommand(fieldListCmd)
+	fieldListCfg = cliutil.InitConfig(qb.EnvVarPrefix)
 }
 
-func formatFields(out quickbase.GetSchemaOutput) (string, error) {
+func formatFields(out qb.GetSchemaOutput) (string, error) {
 
 	// Build map of field ID to labels.
 	fields := make(map[int]string)
