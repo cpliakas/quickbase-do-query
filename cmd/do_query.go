@@ -1,9 +1,8 @@
 package cmd
 
 import (
-	"encoding/json"
 	"errors"
-	"fmt"
+	"strconv"
 
 	"github.com/cpliakas/quickbase-do-query/cliutil"
 	"github.com/cpliakas/quickbase-do-query/qbutil"
@@ -15,11 +14,11 @@ import (
 var doQueryCfg *viper.Viper
 
 var doQueryCmd = &cobra.Command{
-	Use:   "do-query",
-	Short: "Executes a query.",
-	Long:  ``,
+	Use:     "do-query",
+	Short:   "Executes a query.",
+	Long:    ``,
+	PreRunE: globalCfg.PreRunE,
 	Run: func(cmd *cobra.Command, args []string) {
-		globalCfg.InitConfig()
 		qbutil.RequireTableID(globalCfg)
 
 		input := &qb.DoQueryInput{}
@@ -43,7 +42,7 @@ var doQueryCmd = &cobra.Command{
 		// TODO: Support these options.
 		// Unsorted()
 		// OnlyNew()
-		// ReturnPercentage
+		// ReturnPercentage()
 
 		fields, err := qbutil.ParseFieldsOption(doQueryCfg.GetString("fields"))
 		cliutil.HandleError(err, "fields option invalid")
@@ -60,11 +59,9 @@ var doQueryCmd = &cobra.Command{
 		output, err := client.DoQuery(input)
 		cliutil.HandleError(err, "error executing request")
 
-		// @TODO Hijack the UseFIDs in Input.
-		s, err := formatRecords(output, false)
-		cliutil.HandleError(err, "error formatting output")
-
-		fmt.Println(s)
+		// @TODO Hijack the UseFIDs in Input as second parameter.
+		v := newDoQueryOutput(output, doQueryCfg.GetBool("use-labels"))
+		cliutil.PrintJSON(v)
 	},
 }
 
@@ -74,53 +71,56 @@ func init() {
 	doQueryCfg = cliutil.InitConfig(qb.EnvVarPrefix)
 	flags := cliutil.NewFlagger(doQueryCmd, doQueryCfg)
 
-	flags.String("query", "q", "", "query that gets records from the table")
-	flags.String("query-id", "i", "", "ID of the query that gets records from the table")
-	flags.String("query-name", "n", "", "name of the query that gets records from the table")
 	flags.String("fields", "f", "", "comma-delimited list of fields to return")
 	flags.Int("limit", "l", 25, "maximum number of records to return")
 	flags.Int("offset", "o", 0, "number of records to skip")
+	flags.String("query", "q", "", "query that gets records from the table")
+	flags.String("query-id", "i", "", "ID of the query that gets records from the table")
+	flags.String("query-name", "n", "", "name of the query that gets records from the table")
 	flags.String("sort", "s", "", "comma-delimited list of fields to sort by")
+	flags.Bool("use-labels", "u", false, "key by label instead of field ID")
 }
 
-// formatRecords formats records in JSON.
-func formatRecords(out qb.DoQueryOutput, useFIDs bool) (string, error) {
+// newDoQueryOutput returns a DoQueryOutput.
+func newDoQueryOutput(out qb.DoQueryOutput, useLabels bool) DoQueryOutput {
 
 	// Build a field map so we can key the field by label.
+	// TODO: Don't build a map
 	fieldMap := make(map[int]string)
 	for _, f := range out.Fields {
 		fieldMap[f.FieldID] = f.Label
 	}
 
 	// Builds the rendered output.
-	records := make([]RecordRenderedJSON, len(out.Records))
+	records := make([]DoQueryOutputRecord, len(out.Records))
 	for k, r := range out.Records {
+
 		records[k].RecordID = r.RecordID
 		records[k].UpdateID = r.UpdateID
 		records[k].Fields = make(map[string]interface{})
+
 		for _, f := range r.Fields {
-			label := fieldMap[f.FieldID]
+			var label string
+			if !useLabels {
+				label = strconv.Itoa(f.FieldID)
+			} else {
+				label = fieldMap[f.FieldID]
+			}
 			records[k].Fields[label] = f.Value
 		}
 	}
 
-	// Format and render the output.
-	v := &RecordsRenderedJSON{Records: records}
-	b, err := json.MarshalIndent(v, "", "    ")
-	if err != nil {
-		return "", err
-	}
-	return string(b), nil
+	return DoQueryOutput{Records: records}
 }
 
-// RecordsRenderedJSON renders records in JSON.
-type RecordsRenderedJSON struct {
-	Records []RecordRenderedJSON `json:"records"`
+// DoQueryOutput models the output that prints the matched records.
+type DoQueryOutput struct {
+	Records []DoQueryOutputRecord `json:"records"`
 }
 
-// RecordRenderedJSON a record in JSON.
-type RecordRenderedJSON struct {
-	RecordID int                    `json:"record-id"`
-	UpdateID int                    `json:"update-id"`
+// DoQueryOutputRecord models the output that prints a record.
+type DoQueryOutputRecord struct {
+	RecordID int                    `json:"record_id"`
+	UpdateID int                    `json:"update_id"`
 	Fields   map[string]interface{} `json:"fields"`
 }

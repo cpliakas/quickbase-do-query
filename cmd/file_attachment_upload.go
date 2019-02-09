@@ -15,11 +15,11 @@ import (
 var fileAttachmentUploadCfg *viper.Viper
 
 var fileAttachmentUploadCmd = &cobra.Command{
-	Use:   "upload [RECORD_ID] [FIELD_ID] [FILEPATH]",
-	Short: "Uploads a file attachment",
-	Long:  ``,
+	Use:     "upload [RECORD_ID] [FIELD_ID] [FILEPATH]",
+	Short:   "Uploads a file attachment",
+	Long:    ``,
+	PreRunE: globalCfg.PreRunE,
 	Run: func(cmd *cobra.Command, args []string) {
-		globalCfg.InitConfig()
 		qbutil.RequireTableID(globalCfg)
 
 		rid := cliutil.RequireArgInt(args, 0, "record-id")

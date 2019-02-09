@@ -1,12 +1,20 @@
 package cliutil
 
-import "encoding/json"
+import (
+	"encoding/json"
+	"fmt"
+)
 
-// RenderJSON returns pretty-printed JSON as a string.
-func RenderJSON(v interface{}) string {
+// FormatJSON returns pretty-printed JSON as a string.
+func FormatJSON(v interface{}) string {
 	b, err := json.MarshalIndent(v, "", "    ")
 	if err != nil {
 		panic(err)
 	}
 	return string(b)
+}
+
+// PrintJSON writes pretty-printed JSON to STDOUT.
+func PrintJSON(v interface{}) {
+	fmt.Println(FormatJSON(v))
 }

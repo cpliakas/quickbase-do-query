@@ -7,14 +7,17 @@ import (
 	"github.com/cpliakas/quickbase-do-query/qbutil"
 	qb "github.com/cpliakas/quickbase-do-query/quickbase"
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 )
 
+var varSetCfg *viper.Viper
+
 var varSetCmd = &cobra.Command{
-	Use:   "set [NAME] [VALUE]",
-	Short: "Sets a database variable",
-	Long:  ``,
+	Use:     "set [NAME] [VALUE]",
+	Short:   "Sets a database variable",
+	Long:    ``,
+	PreRunE: globalCfg.PreRunE,
 	Run: func(cmd *cobra.Command, args []string) {
-		globalCfg.InitConfig()
 		qbutil.RequireAppID(globalCfg)
 
 		cliutil.RequireArg(args, 0, "name")
@@ -37,4 +40,5 @@ var varSetCmd = &cobra.Command{
 
 func init() {
 	varCmd.AddCommand(varSetCmd)
+	varSetCfg = cliutil.InitConfig(qb.EnvVarPrefix)
 }

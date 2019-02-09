@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/cpliakas/quickbase-do-query/quickbase"
+	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
 
@@ -15,15 +16,6 @@ type GlobalConfig struct {
 // NewGlobalConfig returns a GlobalConfig.
 func NewGlobalConfig(v *viper.Viper) GlobalConfig {
 	return GlobalConfig{viper: v}
-}
-
-// InitConfig wraps quickbase.InitConfig().
-// TODO Remove the panic?
-func (c *GlobalConfig) InitConfig() {
-	err := quickbase.InitConfig(c.viper)
-	if err != nil {
-		panic(fmt.Errorf("error reading config file: %s", err))
-	}
 }
 
 // AppID implements quickbase.Config.AppID().
@@ -58,3 +50,17 @@ func (c GlobalConfig) TicketFile() string { return c.viper.GetString("ticket-fil
 
 // UserToken implements quickbase.Config.UserToken().
 func (c GlobalConfig) UserToken() string { return c.viper.GetString("user-token") }
+
+// InitConfig wraps quickbase.InitConfig().
+func (c *GlobalConfig) InitConfig() error {
+	if err := quickbase.InitConfig(c.viper); err != nil {
+		return fmt.Errorf("error reading configuration: %s", err)
+	}
+	return nil
+}
+
+// PreRunE is a cobra.Command.PreRunE function that initializes the
+// configuration.
+func (c *GlobalConfig) PreRunE(cmd *cobra.Command, args []string) error {
+	return c.InitConfig()
+}

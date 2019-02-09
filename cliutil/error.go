@@ -26,6 +26,6 @@ func HandleError(err error, prefix string) {
 		resp.Error = err.Error()
 	}
 
-	fmt.Fprintf(os.Stderr, "%s\n", RenderJSON(resp))
+	fmt.Fprintf(os.Stderr, "%s\n", FormatJSON(resp))
 	os.Exit(1)
 }
