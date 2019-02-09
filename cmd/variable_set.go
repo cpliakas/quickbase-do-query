@@ -7,7 +7,6 @@ import (
 	"github.com/cpliakas/quickbase-do-query/qbutil"
 	qb "github.com/cpliakas/quickbase-do-query/quickbase"
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 )
 
 var varSetCmd = &cobra.Command{
@@ -18,8 +17,11 @@ var varSetCmd = &cobra.Command{
 		globalCfg.InitConfig()
 		qbutil.RequireAppID(globalCfg)
 
+		cliutil.RequireArg(args, 0, "name")
+		cliutil.RequireArg(args, 1, "value")
+
 		input := &qb.SetVariableInput{
-			AppID: viper.GetString("app-id"),
+			AppID: globalCfg.AppID(),
 			Name:  args[0],
 			Value: args[1],
 		}
@@ -28,6 +30,7 @@ var varSetCmd = &cobra.Command{
 		_, err := client.SetVariable(input)
 		cliutil.HandleError(err, "error executing request")
 
+		// TODO return JSON.
 		fmt.Printf("variable '%s' set: '%s'\n", args[0], args[1])
 	},
 }
