@@ -1,10 +1,10 @@
 package cmd
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/cpliakas/quickbase-do-query/cliutil"
-	"github.com/cpliakas/quickbase-do-query/qbutil"
 	qb "github.com/cpliakas/quickbase-do-query/quickbase"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -13,15 +13,11 @@ import (
 var varSetCfg *viper.Viper
 
 var varSetCmd = &cobra.Command{
-	Use:     "set [NAME] [VALUE]",
-	Short:   "Sets a database variable",
-	Long:    ``,
-	PreRunE: globalCfg.PreRunE,
+	Use:   "set [NAME] [VALUE]",
+	Short: "Sets a database variable",
+	Long:  ``,
+	Args:  varSetCmdValidate,
 	Run: func(cmd *cobra.Command, args []string) {
-		qbutil.RequireAppID(globalCfg)
-
-		cliutil.RequireArg(args, 0, "name")
-		cliutil.RequireArg(args, 1, "value")
 
 		input := &qb.SetVariableInput{
 			AppID: globalCfg.AppID(),
@@ -41,4 +37,20 @@ var varSetCmd = &cobra.Command{
 func init() {
 	varCmd.AddCommand(varSetCmd)
 	varSetCfg = cliutil.InitConfig(qb.EnvVarPrefix)
+}
+
+func varSetCmdValidate(cmd *cobra.Command, args []string) error {
+	globalCfg.RequireAppID = true
+	if err := globalCfg.Validate(); err != nil {
+		return err
+	}
+
+	if len(args) < 1 {
+		return errors.New("missing required argument: [NAME]")
+	}
+	if len(args) < 2 {
+		return errors.New("missing required argument: [VALUE]")
+	}
+
+	return nil
 }

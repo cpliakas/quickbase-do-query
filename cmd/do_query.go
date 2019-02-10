@@ -14,13 +14,11 @@ import (
 var doQueryCfg *viper.Viper
 
 var doQueryCmd = &cobra.Command{
-	Use:     "do-query",
-	Short:   "Executes a query.",
-	Long:    ``,
-	PreRunE: globalCfg.PreRunE,
+	Use:   "do-query",
+	Short: "Executes a query.",
+	Long:  ``,
+	Args:  doQueryCmdValidate,
 	Run: func(cmd *cobra.Command, args []string) {
-		qbutil.RequireTableID(globalCfg)
-
 		input := &qb.DoQueryInput{}
 		input.TableID = globalCfg.TableID()
 
@@ -67,10 +65,9 @@ var doQueryCmd = &cobra.Command{
 
 func init() {
 	rootCmd.AddCommand(doQueryCmd)
-
 	doQueryCfg = cliutil.InitConfig(qb.EnvVarPrefix)
-	flags := cliutil.NewFlagger(doQueryCmd, doQueryCfg)
 
+	flags := cliutil.NewFlagger(doQueryCmd, doQueryCfg)
 	flags.String("fields", "f", "", "comma-delimited list of fields to return")
 	flags.Int("limit", "l", 25, "maximum number of records to return")
 	flags.Int("offset", "o", 0, "number of records to skip")
@@ -79,6 +76,11 @@ func init() {
 	flags.String("query-name", "n", "", "name of the query that gets records from the table")
 	flags.String("sort", "s", "", "comma-delimited list of fields to sort by")
 	flags.Bool("use-labels", "u", false, "key by label instead of field ID")
+}
+
+func doQueryCmdValidate(cmd *cobra.Command, args []string) error {
+	globalCfg.RequireTableID = true
+	return globalCfg.Validate()
 }
 
 // newDoQueryOutput returns a DoQueryOutput.

@@ -36,3 +36,7 @@
 [[constraint]]
   name = "github.com/kubernetes/client-go"
   version = "10.0.0"
+
+[[constraint]]
+  name = "github.com/go-ozzo/ozzo-validation"
+  version = "3.5.0"

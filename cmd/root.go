@@ -32,14 +32,5 @@ func Execute() {
 
 func init() {
 	cfg := cliutil.InitConfig(qb.EnvVarPrefix)
-	flags := cliutil.NewFlagger(rootCmd, cfg)
-
-	flags.PersistentString("app-id", "I", "", "application's dbid")
-	flags.PersistentString("app-token", "A", "", "app token used with ticket to to authenticate API requests")
-	flags.PersistentString("realm-host", "R", "", "The realm host, e.g., 'https://MYREALM.quickbase.com'")
-	flags.PersistentString("ticket", "T", "", "ticket used to authenticate API requests")
-	flags.PersistentString("table-id", "t", "", "table's dbid")
-	flags.PersistentString("user-token", "U", "", "user token used to authenticate API requests")
-
-	globalCfg = qbutil.NewGlobalConfig(cfg)
+	globalCfg = qbutil.NewGlobalConfig(rootCmd, cfg)
 }

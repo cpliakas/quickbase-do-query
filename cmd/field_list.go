@@ -1,8 +1,6 @@
 package cmd
 
 import (
-	"github.com/cpliakas/quickbase-do-query/qbutil"
-
 	"github.com/cpliakas/quickbase-do-query/cliutil"
 	qb "github.com/cpliakas/quickbase-do-query/quickbase"
 	"github.com/spf13/cobra"
@@ -13,13 +11,11 @@ var fieldListCfg *viper.Viper
 
 // TODO: Replace panics with a better error handling mechanism.
 var fieldListCmd = &cobra.Command{
-	Use:     "list",
-	Short:   "Lists fields",
-	Long:    ``,
-	PreRunE: globalCfg.PreRunE,
+	Use:   "list",
+	Short: "Lists fields",
+	Long:  ``,
+	Args:  fieldListCmdValidate,
 	Run: func(cmd *cobra.Command, args []string) {
-		qbutil.RequireTableID(globalCfg)
-
 		input := &qb.GetSchemaInput{ID: globalCfg.TableID()}
 
 		client := qb.NewClient(globalCfg)
@@ -40,6 +36,11 @@ var fieldListCmd = &cobra.Command{
 func init() {
 	fieldCmd.AddCommand(fieldListCmd)
 	fieldListCfg = cliutil.InitConfig(qb.EnvVarPrefix)
+}
+
+func fieldListCmdValidate(cmd *cobra.Command, args []string) error {
+	globalCfg.RequireTableID = true
+	return globalCfg.Validate()
 }
 
 // FieldListOutput renders records in JSON.

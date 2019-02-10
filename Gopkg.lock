@@ -2,12 +2,31 @@
 
 
 [[projects]]
+  digest = "1:320e7ead93de9fd2b0e59b50fd92a4d50c1f8ab455d96bc2eb083267453a9709"
+  name = "github.com/asaskevich/govalidator"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "ccb8e960c48f04d6935e72476ae4a51028f9e22f"
+  version = "v9"
+
+[[projects]]
   digest = "1:abeb38ade3f32a92943e5be54f55ed6d6e3b6602761d74b4aab4c9dd45c18abd"
   name = "github.com/fsnotify/fsnotify"
   packages = ["."]
   pruneopts = "UT"
   revision = "c2828203cd70a50dcccfb2761f8b1f8ceef9a8e9"
   version = "v1.4.7"
+
+[[projects]]
+  digest = "1:aa047c900450fea2242fbb449076eb20cea8278f3b15d2db1950a3c8da8e4308"
+  name = "github.com/go-ozzo/ozzo-validation"
+  packages = [
+    ".",
+    "is",
+  ]
+  pruneopts = "UT"
+  revision = "106681dbb37bfa3e7683c4c8129cb7f5925ea3e9"
+  version = "v3.5.0"
 
 [[projects]]
   digest = "1:c0d19ab64b32ce9fe5cf4ddceba78d5bc9807f0016db6b1183599da3dcc24d10"
@@ -154,6 +173,8 @@
   analyzer-name = "dep"
   analyzer-version = 1
   input-imports = [
+    "github.com/go-ozzo/ozzo-validation",
+    "github.com/go-ozzo/ozzo-validation/is",
     "github.com/kubernetes/client-go/util/homedir",
     "github.com/spf13/cobra",
     "github.com/spf13/viper",

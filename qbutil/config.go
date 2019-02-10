@@ -3,19 +3,41 @@ package qbutil
 import (
 	"fmt"
 
-	"github.com/cpliakas/quickbase-do-query/quickbase"
 	"github.com/spf13/cobra"
+
+	"github.com/cpliakas/quickbase-do-query/cliutil"
+	"github.com/cpliakas/quickbase-do-query/quickbase"
+	validation "github.com/go-ozzo/ozzo-validation"
+	"github.com/go-ozzo/ozzo-validation/is"
 	"github.com/spf13/viper"
 )
 
 // GlobalConfig contains configuration common to all commands.
 type GlobalConfig struct {
 	viper *viper.Viper
+
+	// RequireTableID flags that a table ID is required by the command.
+	RequireTableID bool
+
+	// RequireAppID flags that an app ID is required by the command.
+	RequireAppID bool
+
+	// RequireCreds flags that credentials are required by the command.
+	RequireCreds bool
 }
 
 // NewGlobalConfig returns a GlobalConfig.
-func NewGlobalConfig(v *viper.Viper) GlobalConfig {
-	return GlobalConfig{viper: v}
+func NewGlobalConfig(cmd *cobra.Command, cfg *viper.Viper) GlobalConfig {
+	flags := cliutil.NewFlagger(cmd, cfg)
+
+	flags.PersistentString("app-id", "I", "", "application's dbid")
+	flags.PersistentString("app-token", "A", "", "app token used with ticket to to authenticate API requests")
+	flags.PersistentString("realm-host", "R", "", "The realm host, e.g., 'https://MYREALM.quickbase.com'")
+	flags.PersistentString("ticket", "T", "", "ticket used to authenticate API requests")
+	flags.PersistentString("table-id", "t", "", "table's dbid")
+	flags.PersistentString("user-token", "U", "", "user token used to authenticate API requests")
+
+	return GlobalConfig{viper: cfg}
 }
 
 // AppID implements quickbase.Config.AppID().
@@ -59,8 +81,39 @@ func (c *GlobalConfig) InitConfig() error {
 	return nil
 }
 
-// PreRunE is a cobra.Command.PreRunE function that initializes the
-// configuration.
-func (c *GlobalConfig) PreRunE(cmd *cobra.Command, args []string) error {
-	return c.InitConfig()
+// Validate validates the global configuration options.
+func (c *GlobalConfig) Validate() error {
+	if err := c.InitConfig(); err != nil {
+		return err
+	}
+
+	// The realm-host option is always required.
+	if err := validation.Validate(c.RealmHost(),
+		validation.Required,
+		is.URL,
+	); err != nil {
+		return fmt.Errorf("realm-host option invalid: %s", err)
+	}
+
+	// Validate the app-id option.
+	if c.RequireTableID {
+		if err := validation.Validate(c.AppID(),
+			validation.Required,
+			validation.Length(9, 9),
+		); err != nil {
+			return fmt.Errorf("app-id option invalid: %s", err)
+		}
+	}
+
+	// Validate the table-id option.
+	if c.RequireTableID {
+		if err := validation.Validate(c.TableID(),
+			validation.Required,
+			validation.Length(9, 9),
+		); err != nil {
+			return fmt.Errorf("table-id option invalid: %s", err)
+		}
+	}
+
+	return nil
 }
