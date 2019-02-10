@@ -3,6 +3,11 @@ package quickbase
 const EnvVarPrefix = "QUICKBASE"
 
 const (
+	DefaultConfigFile = "$HOME/.config/quickbase/config"
+	DefaultTicketFile = "$HOME/.config/quickbase/ticket"
+)
+
+const (
 	FieldModeVirtual = "virtual"
 	FieldModeLookup  = "lookup"
 )

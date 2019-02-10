@@ -28,6 +28,9 @@ type Config interface {
 	// accordingly.
 	RealmHost() string
 
+	// TableID returns the dbid of the table used by default.
+	TableID() string
+
 	// Ticket returns the ticket used to authenticate API requests.
 	// See https://quickbase.com/api-guide/authentication_and_secure_access.html
 	Ticket() string
@@ -48,7 +51,7 @@ type Config interface {
 func NewConfig() StandardConfig {
 	v := viper.New()
 
-	// Read from QUICK_BASE_ environment Variables.
+	// Read from QUICKBASE_* environment Variables.
 	v.SetEnvPrefix("QUICKBASE")
 	v.SetEnvKeyReplacer(strings.NewReplacer("-", "_"))
 	v.AutomaticEnv()
@@ -58,15 +61,14 @@ func NewConfig() StandardConfig {
 	v.BindEnv("app-token")
 	v.BindEnv("config-file")
 	v.BindEnv("realm-host")
+	v.BindEnv("table-id")
 	v.BindEnv("ticket")
 	v.BindEnv("ticket-file")
 	v.BindEnv("user-token")
 
 	// Set defaults.
-	v.SetDefault("config-file", "$HOME/.config/quickbase/config")
-	v.SetDefault("host", "quickbase.com")
-	v.SetDefault("ticket-file", "$HOME/.config/quickbase/ticket")
-	v.SetDefault("scheme", "https")
+	v.SetDefault("config-file", DefaultConfigFile)
+	v.SetDefault("ticket-file", DefaultConfigFile)
 
 	// Read in the config file.
 	err := InitConfig(v)
@@ -127,6 +129,9 @@ func (c StandardConfig) ConfigFile() string { return c.viper.GetString("config-f
 
 // RealmHost implements Config.RealmHost().
 func (c StandardConfig) RealmHost() string { return c.viper.GetString("realm-host") }
+
+// TableID implements Config.TableID().
+func (c StandardConfig) TableID() string { return c.viper.GetString("table-id") }
 
 // Ticket implements Config.Ticket().
 func (c StandardConfig) Ticket() string { return c.viper.GetString("ticket") }

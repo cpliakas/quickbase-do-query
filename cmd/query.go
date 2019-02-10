@@ -14,8 +14,8 @@ import (
 var doQueryCfg *viper.Viper
 
 var doQueryCmd = &cobra.Command{
-	Use:   "do-query",
-	Short: "Executes a query.",
+	Use:   "query",
+	Short: "Executes a query against a table",
 	Long:  ``,
 	Args:  doQueryCmdValidate,
 	Run: func(cmd *cobra.Command, args []string) {

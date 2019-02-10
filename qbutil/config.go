@@ -32,9 +32,14 @@ func NewGlobalConfig(cmd *cobra.Command, cfg *viper.Viper) GlobalConfig {
 
 	flags.PersistentString("app-id", "I", "", "application's dbid")
 	flags.PersistentString("app-token", "A", "", "app token used with ticket to to authenticate API requests")
-	flags.PersistentString("realm-host", "R", "", "The realm host, e.g., 'https://MYREALM.quickbase.com'")
-	flags.PersistentString("ticket", "T", "", "ticket used to authenticate API requests")
+	flags.PersistentBool("batch", "B", false, "render output in batch mode, useful for chaining commands together")
+	flags.PersistentString("config-file", "C", quickbase.DefaultConfigFile, "path to the config file")
+	flags.PersistentString("filter", "F", "", "JMESPath filter")
+	flags.PersistentBool("raw", "X", false, "return the raw output from the API call")
+	flags.PersistentString("realm-host", "R", "", "realm host, e.g., 'https://MYREALM.quickbase.com'")
 	flags.PersistentString("table-id", "t", "", "table's dbid")
+	flags.PersistentString("ticket", "T", "", "ticket used to authenticate API requests")
+	flags.PersistentString("ticket-file", "K", quickbase.DefaultTicketFile, "path to the file containing a cached ticket")
 	flags.PersistentString("user-token", "U", "", "user token used to authenticate API requests")
 
 	return GlobalConfig{viper: cfg}

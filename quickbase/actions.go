@@ -309,56 +309,56 @@ func (c Client) SetVariable(input *SetVariableInput) (output SetVariableOutput, 
 	return
 }
 
-// UploadFileAttachmentInput models the request sent to API_UploadFile
+// UploadFileInput models the request sent to API_UploadFile
 // See https://help.quickbase.com/api-guide/uploadfile.html
-type UploadFileAttachmentInput struct {
+type UploadFileInput struct {
 	RequestParams
 	Credentials
 
-	TableID  string                           `xml:"-"`
-	Fields   []UploadFileAttachmentInputField `xml:"field"`
-	RecordID int                              `xml:"rid"`
+	TableID  string                 `xml:"-"`
+	Fields   []UploadFileInputField `xml:"field"`
+	RecordID int                    `xml:"rid"`
 }
 
-func (input *UploadFileAttachmentInput) setCredentials(creds Credentials) { input.Credentials = creds }
-func (input *UploadFileAttachmentInput) method() string                   { return http.MethodPost }
-func (input *UploadFileAttachmentInput) uri() string                      { return "/db/" + input.TableID }
-func (input *UploadFileAttachmentInput) payload() ([]byte, error)         { return xml.Marshal(input) }
-func (input *UploadFileAttachmentInput) headers(req *http.Request) {
+func (input *UploadFileInput) setCredentials(creds Credentials) { input.Credentials = creds }
+func (input *UploadFileInput) method() string                   { return http.MethodPost }
+func (input *UploadFileInput) uri() string                      { return "/db/" + input.TableID }
+func (input *UploadFileInput) payload() ([]byte, error)         { return xml.Marshal(input) }
+func (input *UploadFileInput) headers(req *http.Request) {
 	req.Header.Set("Content-Type", "application/xml")
 	req.Header.Set("QUICKBASE-ACTION", "API_UploadFile")
 }
 
-// UploadFileAttachmentInputField models the "field" element in an
+// UploadFileInputField models the "field" element in an
 // API_UploadFile request.
-type UploadFileAttachmentInputField struct {
+type UploadFileInputField struct {
 	FieldID  int    `xml:"fid,attr"`
 	FileData string `xml:",chardata"`
 	Name     string `xml:"filename,attr"`
 }
 
-// UploadFileAttachmentOutput models the response returned by API_UploadFile
+// UploadFileOutput models the response returned by API_UploadFile
 // See https://help.quickbase.com/api-guide/uploadfile.html
-type UploadFileAttachmentOutput struct {
+type UploadFileOutput struct {
 	ResponseParams
 
-	Fields []UploadFileAttachmentOutputField `xml:"file_fields>field"`
+	Fields []UploadFileOutputField `xml:"file_fields>field"`
 }
 
-func (output *UploadFileAttachmentOutput) parse(body []byte, res *http.Response) error {
+func (output *UploadFileOutput) parse(body []byte, res *http.Response) error {
 	return parseXML(output, body, res)
 }
 
-// UploadFileAttachmentOutputField models the "file_fields>field" element an
+// UploadFileOutputField models the "file_fields>field" element an
 // API_UploadFile response.
-type UploadFileAttachmentOutputField struct {
+type UploadFileOutputField struct {
 	ID  int    `xml:"id,attr"`
 	URL string `xml:"url"`
 }
 
-// UploadFileAttachment makes an API_UploadFile call.
+// UploadFile makes an API_UploadFile call.
 // See https://help.quickbase.com/api-guide/uploadfile.html
-func (c Client) UploadFileAttachment(input *UploadFileAttachmentInput) (output UploadFileAttachmentOutput, err error) {
+func (c Client) UploadFile(input *UploadFileInput) (output UploadFileOutput, err error) {
 	err = c.Do(input, &output)
 	if err == nil && output.ErrorCode != 0 {
 		err = fmt.Errorf("error executing API_UploadFile: %s (error code: %v)", output.ErrorText, output.ErrorCode)
