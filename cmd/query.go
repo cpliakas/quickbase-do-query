@@ -44,7 +44,7 @@ var doQueryCmd = &cobra.Command{
 
 		fields, err := qbutil.ParseFieldsOption(doQueryCfg.GetString("fields"))
 		cliutil.HandleError(err, "fields option invalid")
-		input.FieldSlice = fields
+		input.FieldList = fields
 
 		sort, order, err := qbutil.ParseSortOption(doQueryCfg.GetString("sort"))
 		cliutil.HandleError(err, "sort option invalid")

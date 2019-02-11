@@ -2,7 +2,9 @@ package quickbase
 
 import (
 	"encoding/xml"
+	"fmt"
 	"net/http"
+	"strings"
 )
 
 // Input is the interface implemented by structs that model requests sent to
@@ -24,8 +26,9 @@ type Input interface {
 
 // RequestParams models the parameters that are common to all API requests.
 type RequestParams struct {
-	XMLName  xml.Name `xml:"qdbapi"`
-	UserData string   `xml:"udata,omitempty"`
+	XMLName           xml.Name `xml:"qdbapi"`
+	UserData          string   `xml:"udata,omitempty"`
+	MillisecondsInUTC bool     `xml:"msInUTC,int"`
 }
 
 // AuthenticatedInput is the interface implemented by structs that model
@@ -81,3 +84,26 @@ func (r *ResponseParams) setAction(a string)      { r.Action = a }
 func (r *ResponseParams) setErrorCode(c int)      { r.ErrorCode = c }
 func (r *ResponseParams) setErrorText(t string)   { r.ErrorText = t }
 func (r *ResponseParams) setErrorDetail(d string) { r.ErrorDetail = d }
+
+// FieldList models field lists in API requests.
+type FieldList []int
+
+// MarshalXML converts a list of fields to a "." delimited string.
+func (f FieldList) MarshalXML(e *xml.Encoder, start xml.StartElement) error {
+	s := strings.Trim(strings.Replace(fmt.Sprint(f), " ", ".", -1), "[]")
+	return e.EncodeElement(s, start)
+}
+
+// Bool converts a boolean to an integer.
+type Bool bool
+
+// MarshalXML implements Marshaler.MarshalXML and renders the bool as an int.
+func (b Bool) MarshalXML(e *xml.Encoder, start xml.StartElement) error {
+	var s string
+	if b == true {
+		s = "1"
+	} else {
+		s = "0"
+	}
+	return e.EncodeElement(s, start)
+}

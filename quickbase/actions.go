@@ -1,6 +1,8 @@
 package quickbase
 
 import (
+	"bytes"
+	"encoding/csv"
 	"encoding/xml"
 	"fmt"
 	"net/http"
@@ -59,12 +61,12 @@ type DoQueryInput struct {
 	Query            string               `xml:"query,omitempty"`
 	QueryID          int                  `xml:"qid,omitempty"`
 	QueryName        string               `xml:"qname,omitempty"`
-	IncludeRecordIDs BoolToInt            `xml:"includeRids,omitempty"`
-	ReturnPercentage BoolToInt            `xml:"returnpercentage,omitempty"`
-	UseFIDs          BoolToInt            `xml:"useFids,omitempty"`
+	IncludeRecordIDs Bool                 `xml:"includeRids,omitempty"`
+	ReturnPercentage Bool                 `xml:"returnpercentage,omitempty"`
+	UseFieldIDs      Bool                 `xml:"useFids,omitempty"`
 	Format           string               `xml:"fmt,omitempty"`
-	FieldSlice       DoQueryInputFields   `xml:"clist,omitempty"`
-	SortSlice        DoQueryInputFields   `xml:"slist,omitempty"`
+	FieldList        FieldList            `xml:"clist,omitempty"`
+	SortList         FieldList            `xml:"slist,omitempty"`
 	Options          *DoQueryInputOptions `xml:"options,omitempty"`
 }
 
@@ -80,77 +82,69 @@ func (input *DoQueryInput) headers(req *http.Request) {
 // EnsureOptions returns an initialized Options property. This method should be
 // used in favor of accessing the property directly to avoid null pointer
 // exceptions.
-func (i *DoQueryInput) EnsureOptions() *DoQueryInputOptions {
-	if i.Options == nil {
-		i.Options = &DoQueryInputOptions{}
+func (input *DoQueryInput) EnsureOptions() *DoQueryInputOptions {
+	if input.Options == nil {
+		input.Options = &DoQueryInputOptions{}
 	}
-	return i.Options
+	return input.Options
 }
 
 // Fields sets the fields that are returned in the response.
-func (i *DoQueryInput) Fields(fids ...int) *DoQueryInput {
-	i.FieldSlice = fids
-	return i
+func (input *DoQueryInput) Fields(fids ...int) *DoQueryInput {
+	input.FieldList = fids
+	return input
 }
 
 // SortBy sets the fields to be sorted by.
-func (i *DoQueryInput) SortBy(fids ...int) *DoQueryInput {
-	i.SortSlice = fids
-	return i
+func (input *DoQueryInput) SortBy(fids ...int) *DoQueryInput {
+	input.SortList = fids
+	return input
 }
 
 // SortOrder sets the "sortorder" option.
-func (i *DoQueryInput) SortOrder(order ...string) *DoQueryInput {
-	i.EnsureOptions().SortOrderSlice = order
-	return i
+func (input *DoQueryInput) SortOrder(order ...string) *DoQueryInput {
+	input.EnsureOptions().SortOrderList = order
+	return input
 }
 
 // Sort sets the fields and order in one shot.
-func (i *DoQueryInput) Sort(sort []int, order []string) *DoQueryInput {
-	i.SortSlice = sort
-	i.EnsureOptions().SortOrderSlice = order
-	return i
+func (input *DoQueryInput) Sort(sort []int, order []string) *DoQueryInput {
+	input.SortList = sort
+	input.EnsureOptions().SortOrderList = order
+	return input
 }
 
 // Limit sets the "num" option.
-func (i *DoQueryInput) Limit(n int) *DoQueryInput {
-	i.EnsureOptions().Limit = n
-	return i
+func (input *DoQueryInput) Limit(n int) *DoQueryInput {
+	input.EnsureOptions().Limit = n
+	return input
 }
 
 // Offset sets the "skp" option.
-func (i *DoQueryInput) Offset(n int) *DoQueryInput {
-	i.EnsureOptions().Offset = n
-	return i
+func (input *DoQueryInput) Offset(n int) *DoQueryInput {
+	input.EnsureOptions().Offset = n
+	return input
 }
 
 // OnlyNew sets the "onlynew" option.
-func (i *DoQueryInput) OnlyNew() *DoQueryInput {
-	i.EnsureOptions().OnlyNew = true
-	return i
+func (input *DoQueryInput) OnlyNew() *DoQueryInput {
+	input.EnsureOptions().OnlyNew = true
+	return input
 }
 
 // Unsorted sets the "nosort" option.
-func (i *DoQueryInput) Unsorted() *DoQueryInput {
-	i.EnsureOptions().Unsorted = true
-	return i
-}
-
-// DoQueryInputFields models field lists in API_DoQuery requests.
-type DoQueryInputFields []int
-
-// MarshalXML converts a list of fields to a "." delimited string.
-func (f DoQueryInputFields) MarshalXML(e *xml.Encoder, start xml.StartElement) error {
-	return e.EncodeElement(FormatFieldIDs(f), start)
+func (input *DoQueryInput) Unsorted() *DoQueryInput {
+	input.EnsureOptions().Unsorted = true
+	return input
 }
 
 // DoQueryInputOptions models the "options" element in API_DoQuery requests.
 type DoQueryInputOptions struct {
-	SortOrderSlice []string
-	Limit          int
-	Offset         int
-	OnlyNew        bool
-	Unsorted       bool
+	SortOrderList []string
+	Limit         int
+	Offset        int
+	OnlyNew       bool
+	Unsorted      bool
 }
 
 // MarshalXML implements Marshaler.MarshalXML and formats the value of the
@@ -164,8 +158,8 @@ func (o DoQueryInputOptions) MarshalXML(e *xml.Encoder, start xml.StartElement) 
 	if o.Limit > 0 {
 		opts = append(opts, "num-"+strconv.Itoa(o.Limit))
 	}
-	if len(o.SortOrderSlice) > 0 {
-		opts = append(opts, "sortorder-"+strings.Join(o.SortOrderSlice, ""))
+	if len(o.SortOrderList) > 0 {
+		opts = append(opts, "sortorder-"+strings.Join(o.SortOrderList, ""))
 	}
 	if o.OnlyNew == true {
 		opts = append(opts, "onlynew")
@@ -269,6 +263,91 @@ func (c Client) GetSchema(input *GetSchemaInput) (output GetSchemaOutput, err er
 	return
 }
 
+// ImportFromCSVInput models the request sent to API_ImportFromCSV
+// See https://help.quickbase.com/api-guide/importfromcsv.html
+type ImportFromCSVInput struct {
+	RequestParams
+	Credentials
+
+	TableID          string                     `xml:"-"`
+	FieldList        FieldList                  `xml:"clist,omitempty"`
+	OutputFieldList  FieldList                  `xml:"clist_output,omitempty"`
+	MergeFieldID     int                        `xml:"mergeFieldId,omitempty"`
+	DecimalAsPercent Bool                       `xml:"decimalPercent,omitempty"`
+	Records          *ImportFromCSVInputRecords `xml:"records_CSV"`
+	SkipFirstRow     Bool                       `xml:"skipfirst,omitempty"`
+}
+
+func (input *ImportFromCSVInput) setCredentials(creds Credentials) { input.Credentials = creds }
+func (input *ImportFromCSVInput) method() string                   { return http.MethodPost }
+func (input *ImportFromCSVInput) uri() string                      { return "/db/" + input.TableID }
+func (input *ImportFromCSVInput) payload() ([]byte, error)         { return xml.Marshal(input) }
+func (input *ImportFromCSVInput) headers(req *http.Request) {
+	req.Header.Set("Content-Type", "application/xml")
+	req.Header.Set("QUICKBASE-ACTION", "API_ImportFromCSV")
+}
+
+// EnsureRecords returns an initialized Records property. This method should be
+// used in favor of accessing the property directly to avoid null pointer
+// exceptions.
+func (input *ImportFromCSVInput) EnsureRecords() *ImportFromCSVInputRecords {
+	if input.Records == nil {
+		input.Records = &ImportFromCSVInputRecords{}
+	}
+	return input.Records
+}
+
+// CSV sets raw CSV data,
+func (input *ImportFromCSVInput) CSV(csv []byte) {
+	input.EnsureRecords().CSV = string(csv)
+}
+
+// FormatCSV converts a string slice slice ([][]string) into CSV data.
+func (input *ImportFromCSVInput) FormatCSV(records [][]string) {
+	var buf bytes.Buffer
+	w := csv.NewWriter(&buf)
+	w.WriteAll(records)
+	input.EnsureRecords().CSV = buf.String()
+}
+
+// ImportFromCSVInputRecords models the "records_CSV" element in
+// API_ImportFromCSV requests.
+type ImportFromCSVInputRecords struct {
+	CSV string `xml:",cdata"`
+}
+
+// ImportFromCSVOutput models the response returned by API_ImportFromCSV
+// See https://help.quickbase.com/api-guide/importfromcsv.html
+type ImportFromCSVOutput struct {
+	ResponseParams
+
+	NumRecordsAdded   int                         `xml:"num_recs_added"`
+	NumRecordsInput   int                         `xml:"num_recs_input"`
+	NumRecordsUpdated int                         `xml:"num_recs_updated"`
+	Records           []ImportFromCSVOutputRecord `xml:"rids>rid,omitempty"`
+}
+
+func (output *ImportFromCSVOutput) parse(body []byte, res *http.Response) error {
+	return parseXML(output, body, res)
+}
+
+// ImportFromCSVOutputRecord models the "rids>rid" element in API_ImportFromCSV
+// responses.
+type ImportFromCSVOutputRecord struct {
+	ID       int `xml:",chardata"`
+	UpdateID int `xml:"update_id,attr"`
+}
+
+// ImportFromCSV makes an API_ImportFromCSV call.
+// See https://help.quickbase.com/api-guide/importfromcsv.html
+func (c Client) ImportFromCSV(input *ImportFromCSVInput) (output ImportFromCSVOutput, err error) {
+	err = c.Do(input, &output)
+	if err == nil && output.ErrorCode != 0 {
+		err = fmt.Errorf("error executing API_ImportFromCSV: %s (error code: %v)", output.ErrorText, output.ErrorCode)
+	}
+	return
+}
+
 // SetVariableInput models the request sent to API_SetDBvar
 // See https://help.quickbase.com/api-guide/setdbvar.html
 type SetVariableInput struct {
@@ -329,10 +408,9 @@ func (input *UploadFileInput) headers(req *http.Request) {
 	req.Header.Set("QUICKBASE-ACTION", "API_UploadFile")
 }
 
-// UploadFileInputField models the "field" element in an
-// API_UploadFile request.
+// UploadFileInputField models the "field" element in API_UploadFile requests.
 type UploadFileInputField struct {
-	FieldID  int    `xml:"fid,attr"`
+	ID       int    `xml:"fid,attr"`
 	FileData string `xml:",chardata"`
 	Name     string `xml:"filename,attr"`
 }
@@ -349,8 +427,8 @@ func (output *UploadFileOutput) parse(body []byte, res *http.Response) error {
 	return parseXML(output, body, res)
 }
 
-// UploadFileOutputField models the "file_fields>field" element an
-// API_UploadFile response.
+// UploadFileOutputField models the "file_fields>field" element in
+// API_UploadFile responses.
 type UploadFileOutputField struct {
 	ID  int    `xml:"id,attr"`
 	URL string `xml:"url"`

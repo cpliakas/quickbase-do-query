@@ -31,7 +31,7 @@ var fileUploadCmd = &cobra.Command{
 		}
 
 		field := qb.UploadFileInputField{
-			FieldID:  fileUploadCfg.GetInt("field-id"),
+			ID:       fileUploadCfg.GetInt("field-id"),
 			FileData: base64.StdEncoding.EncodeToString(fileData),
 			Name:     fileName,
 		}
