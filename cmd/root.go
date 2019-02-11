@@ -4,9 +4,8 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/cpliakas/quickbase-do-query/qbutil"
-
 	"github.com/cpliakas/quickbase-do-query/cliutil"
+	"github.com/cpliakas/quickbase-do-query/qbutil"
 	qb "github.com/cpliakas/quickbase-do-query/quickbase"
 	"github.com/spf13/cobra"
 )
