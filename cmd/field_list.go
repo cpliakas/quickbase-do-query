@@ -9,7 +9,6 @@ import (
 
 var fieldListCfg *viper.Viper
 
-// TODO: Replace panics with a better error handling mechanism.
 var fieldListCmd = &cobra.Command{
 	Use:   "list",
 	Short: "Lists fields",

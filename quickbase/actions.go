@@ -420,7 +420,7 @@ type UploadFileInputField struct {
 type UploadFileOutput struct {
 	ResponseParams
 
-	Fields []UploadFileOutputField `xml:"file_fields>field"`
+	Fields []UploadFileOutputField `xml:"file_fields>field" json:"fields"`
 }
 
 func (output *UploadFileOutput) parse(body []byte, res *http.Response) error {
@@ -430,8 +430,8 @@ func (output *UploadFileOutput) parse(body []byte, res *http.Response) error {
 // UploadFileOutputField models the "file_fields>field" element in
 // API_UploadFile responses.
 type UploadFileOutputField struct {
-	ID  int    `xml:"id,attr"`
-	URL string `xml:"url"`
+	ID  int    `xml:"id,attr" json:"field_id"`
+	URL string `xml:"url" json:"url"`
 }
 
 // UploadFile makes an API_UploadFile call.

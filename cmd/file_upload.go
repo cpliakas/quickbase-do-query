@@ -3,7 +3,6 @@ package cmd
 import (
 	"encoding/base64"
 	"errors"
-	"fmt"
 	"io/ioutil"
 	"path/filepath"
 
@@ -46,7 +45,7 @@ var fileUploadCmd = &cobra.Command{
 		output, err := client.UploadFile(input)
 		cliutil.HandleError(err, "error formatting output")
 
-		fmt.Println(output.Fields[0].URL)
+		cliutil.PrintJSON(output)
 	},
 }
 

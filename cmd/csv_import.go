@@ -15,7 +15,7 @@ var csvImportCfg *viper.Viper
 
 var csvImportCmd = &cobra.Command{
 	Use:   "import [FILEPATH]",
-	Short: "fmports data from a CSV file into a table",
+	Short: "imports data from a CSV file into a table",
 	Long:  ``,
 	Args:  csvImportCmdValidate,
 	Run: func(cmd *cobra.Command, args []string) {

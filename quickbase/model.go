@@ -77,7 +77,7 @@ type ResponseParams struct {
 	ErrorCode   int      `xml:"errcode" json:"-"`
 	ErrorText   string   `xml:"errtext" json:"-"`
 	ErrorDetail string   `xml:"errdetail" json:"-"`
-	UserData    string   `xml:"udata,omitempty" json:",omitempty"`
+	UserData    string   `xml:"udata,omitempty" json:"user_data,omitempty"`
 }
 
 func (r *ResponseParams) setAction(a string)      { r.Action = a }

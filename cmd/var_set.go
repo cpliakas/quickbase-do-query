@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"errors"
-	"fmt"
 
 	"github.com/cpliakas/quickbase-do-query/cliutil"
 	qb "github.com/cpliakas/quickbase-do-query/quickbase"
@@ -26,11 +25,14 @@ var varSetCmd = &cobra.Command{
 		}
 
 		client := qb.NewClient(globalCfg)
-		_, err := client.SetVariable(input)
+		output, err := client.SetVariable(input)
 		cliutil.HandleError(err, "error executing request")
 
-		// TODO return JSON.
-		fmt.Printf("variable '%s' set: '%s'\n", args[0], args[1])
+		cliutil.PrintJSON(VarSetOutput{
+			UserData: output.UserData,
+			Name:     args[0],
+			Value:    args[1],
+		})
 	},
 }
 
@@ -53,4 +55,11 @@ func varSetCmdValidate(cmd *cobra.Command, args []string) error {
 	}
 
 	return nil
+}
+
+// VarSetOutput renders records in JSON.
+type VarSetOutput struct {
+	UserData string `json:"user_data,omitempty"`
+	Name     string `json:"name"`
+	Value    string `json:"value"`
 }

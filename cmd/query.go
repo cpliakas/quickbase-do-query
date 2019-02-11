@@ -57,7 +57,6 @@ var doQueryCmd = &cobra.Command{
 		output, err := client.DoQuery(input)
 		cliutil.HandleError(err, "error executing request")
 
-		// @TODO Hijack the UseFIDs in Input as second parameter.
 		v := newDoQueryOutput(output, doQueryCfg.GetBool("use-labels"))
 		cliutil.PrintJSON(v)
 	},
@@ -97,7 +96,7 @@ func newDoQueryOutput(out qb.DoQueryOutput, useLabels bool) DoQueryOutput {
 	records := make([]DoQueryOutputRecord, len(out.Records))
 	for k, r := range out.Records {
 
-		records[k].RecordID = r.RecordID
+		records[k].ID = r.RecordID
 		records[k].UpdateID = r.UpdateID
 		records[k].Fields = make(map[string]interface{})
 
@@ -112,17 +111,21 @@ func newDoQueryOutput(out qb.DoQueryOutput, useLabels bool) DoQueryOutput {
 		}
 	}
 
-	return DoQueryOutput{Records: records}
+	return DoQueryOutput{
+		UserData: out.UserData,
+		Records:  records,
+	}
 }
 
 // DoQueryOutput models the output that prints the matched records.
 type DoQueryOutput struct {
-	Records []DoQueryOutputRecord `json:"records"`
+	UserData string                `json:"user_data,omitempty"`
+	Records  []DoQueryOutputRecord `json:"records"`
 }
 
 // DoQueryOutputRecord models the output that prints a record.
 type DoQueryOutputRecord struct {
-	RecordID int                    `json:"record_id"`
+	ID       int                    `json:"record_id"`
 	UpdateID int                    `json:"update_id"`
 	Fields   map[string]interface{} `json:"fields"`
 }
