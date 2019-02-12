@@ -5,6 +5,7 @@ import (
 	"errors"
 	"io/ioutil"
 	"path/filepath"
+	"strings"
 
 	"github.com/cpliakas/quickbase-do-query/cliutil"
 	qb "github.com/cpliakas/quickbase-do-query/quickbase"
@@ -21,12 +22,13 @@ var fileUploadCmd = &cobra.Command{
 	Args:  fileUploadCmdValidate,
 	Run: func(cmd *cobra.Command, args []string) {
 
-		fileData, err := ioutil.ReadFile(args[0])
+		filePath := strings.TrimPrefix(args[0], "file://")
+		fileData, err := ioutil.ReadFile(filePath)
 		cliutil.HandleError(err, "error reading file")
 
 		fileName := fileUploadCfg.GetString("file-name")
 		if fileName == "" {
-			fileName = filepath.Base(args[0])
+			fileName = filepath.Base(filePath)
 		}
 
 		field := qb.UploadFileInputField{

@@ -25,14 +25,25 @@ func ParseKeyValue(s string) map[string]string {
 		}
 	}
 
-	// Split string by spaces that aren't in quotes.
+	// Split the string by spaces that aren't in quotes.
 	parts := strings.FieldsFunc(s, fn)
 
 	// Build and return the map.
 	m := make(map[string]string)
 	for _, part := range parts {
 		p := strings.Split(part, "=")
-		m[p[0]] = strings.Trim(p[1], `"`) // TODO unicode.Quotation_Mark?
+
+		// Protect against values with no "=", treat them as a key.
+		if len(p) < 2 {
+			p = []string{p[0], ""}
+		}
+
+		// Trim quotes at the edges.
+		// TODO parse to rune to check for unicode.Quotation_Mark?
+		p[0] = strings.Trim(p[0], `"`)
+		p[1] = strings.Trim(p[1], `"`)
+
+		m[p[0]] = p[1]
 	}
 
 	return m
