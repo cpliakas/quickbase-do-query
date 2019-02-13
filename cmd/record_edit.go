@@ -15,26 +15,27 @@ import (
 	"github.com/spf13/viper"
 )
 
-var recordAddCfg *viper.Viper
+var recordEditCfg *viper.Viper
 
-var recordAddCmd = &cobra.Command{
-	Use:   "add [FIELD_VALUES]",
-	Short: "Adds a record",
+var recordEditCmd = &cobra.Command{
+	Use:   "edit [FIELD_VALUES]",
+	Short: "Edits a record",
 	Long:  ``,
-	Args:  recordAddCmdValidate,
+	Args:  recordEditCmdValidate,
 	Run: func(cmd *cobra.Command, args []string) {
 
 		values := cliutil.ParseKeyValue(strings.Join(args, " "))
-		fields, err := parseValues(values)
+		fields, err := parseEditValues(values)
 		cliutil.HandleError(err, "error parsing field values")
 
-		input := &qb.AddRecordInput{
-			TableID: globalCfg.TableID(),
-			Fields:  fields,
+		input := &qb.EditRecordInput{
+			TableID:  globalCfg.TableID(),
+			RecordID: recordEditCfg.GetInt("record-id"),
+			Fields:   fields,
 		}
 
 		client := qb.NewClient(globalCfg)
-		output, err := client.AddRecord(input)
+		output, err := client.EditRecord(input)
 		cliutil.HandleError(err, "error formatting output")
 
 		cliutil.PrintJSON(output)
@@ -42,11 +43,14 @@ var recordAddCmd = &cobra.Command{
 }
 
 func init() {
-	recordCmd.AddCommand(recordAddCmd)
-	recordAddCfg = cliutil.InitConfig(qb.EnvVarPrefix)
+	recordCmd.AddCommand(recordEditCmd)
+	recordEditCfg = cliutil.InitConfig(qb.EnvVarPrefix)
+
+	flags := cliutil.NewFlagger(recordEditCmd, recordEditCfg)
+	flags.Int("record-id", "r", 0, "ID of the record being edited")
 }
 
-func recordAddCmdValidate(cmd *cobra.Command, args []string) error {
+func recordEditCmdValidate(cmd *cobra.Command, args []string) error {
 	globalCfg.RequireTableID = true
 	if err := globalCfg.Validate(); err != nil {
 		return err
@@ -55,21 +59,24 @@ func recordAddCmdValidate(cmd *cobra.Command, args []string) error {
 	if len(args) < 1 {
 		return errors.New("missing required argument: [FIELD_VALUES]")
 	}
+	if recordEditCfg.GetInt("record-id") <= 0 {
+		return errors.New("missing required option: record-id")
+	}
 
 	return nil
 }
 
-// parseValues parses the values argument into a qb.AddRecordInputField slice.
+// parseValues parses the values argument into a qb.EditRecordInputField slice.
 // TODO Make this generic?
-func parseValues(m map[string]string) ([]qb.AddRecordInputField, error) {
+func parseEditValues(m map[string]string) ([]qb.EditRecordInputField, error) {
 	isNumeric := regexp.MustCompile(`^[1-9][0-9]*$`)
-	fields := make([]qb.AddRecordInputField, len(m))
+	fields := make([]qb.EditRecordInputField, len(m))
 
 	i := 0
 	for field, value := range m {
 
 		// Add the field ID or field label.
-		fields[i] = qb.AddRecordInputField{}
+		fields[i] = qb.EditRecordInputField{}
 		if isNumeric.MatchString(field) {
 			fid, _ := strconv.Atoi(field)
 			fields[i].ID = fid

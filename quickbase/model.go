@@ -28,7 +28,7 @@ type Input interface {
 type RequestParams struct {
 	XMLName           xml.Name `xml:"qdbapi"`
 	UserData          string   `xml:"udata,omitempty"`
-	MillisecondsInUTC bool     `xml:"msInUTC,int"`
+	MillisecondsInUTC Bool     `xml:"msInUTC,omitempty"`
 }
 
 // AuthenticatedInput is the interface implemented by structs that model

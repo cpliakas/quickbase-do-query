@@ -58,7 +58,7 @@ func init() {
 	flags := cliutil.NewFlagger(fileUploadCmd, fileUploadCfg)
 	flags.Int("field-id", "f", 0, "the file 's field ID")
 	flags.String("file-name", "n", "", "the name of file stored in the record")
-	flags.Int("record-id", "r", 0, "record ID the file  is being uploaded to")
+	flags.Int("record-id", "r", 0, "record ID the file is being uploaded to")
 }
 
 func fileUploadCmdValidate(cmd *cobra.Command, args []string) error {

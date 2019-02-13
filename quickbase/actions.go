@@ -278,6 +278,63 @@ func (c Client) DoQuery(input *DoQueryInput) (output DoQueryOutput, err error) {
 	return
 }
 
+// EditRecordInput models the request sent to API_EditRecord.
+// See https://help.quickbase.com/api-guide/edit_record.html
+type EditRecordInput struct {
+	RequestParams
+	Credentials
+
+	TableID           string                 `xml:"-"`
+	DisplayRecord     bool                   `xml:"disprec,int,omitempty"`
+	SetCheckboxFields bool                   `xml:"fform,int,omitempty"`
+	Fields            []EditRecordInputField `xml:"field"`
+	IgnoreError       bool                   `xml:"ignoreError,int,omitempty"`
+	MillisecondsInUtc bool                   `xml:"msInUTC,int,omitempty"`
+	RecordID          int                    `xml:"rid"`
+	UpdateID          int                    `xml:"update_id,omitempty"`
+}
+
+func (input *EditRecordInput) setCredentials(creds Credentials) { input.Credentials = creds }
+func (input *EditRecordInput) method() string                   { return http.MethodPost }
+func (input *EditRecordInput) uri() string                      { return "/db/" + input.TableID }
+func (input *EditRecordInput) payload() ([]byte, error)         { return xml.Marshal(input) }
+func (input *EditRecordInput) headers(req *http.Request) {
+	req.Header.Set("Content-Type", "application/xml")
+	req.Header.Set("QUICKBASE-ACTION", "API_EditRecord")
+}
+
+// EditRecordInputField models the "field" element in API_EditRecord requests.
+type EditRecordInputField struct {
+	ID       int    `xml:"fid,attr,omitempty"`
+	FileName string `xml:"filename,attr,omitempty"`
+	Label    string `xml:"name,attr,omitempty"`
+	Value    string `xml:",chardata"`
+}
+
+// EditRecordOutput models the response returned by API_EditRecord
+// See https://help.quickbase.com/api-guide/edit_record.html
+type EditRecordOutput struct {
+	ResponseParams
+
+	NumFieldsChanged int `xml:"num_fields_changed" json:"num_fields_changed"`
+	RecordID         int `xml:"rid" json:"record_id"`
+	UpdateID         int `xml:"update_id" json:"update_id"`
+}
+
+func (output *EditRecordOutput) parse(body []byte, res *http.Response) error {
+	return parseXML(output, body, res)
+}
+
+// EditRecord makes an API_EditRecord call.
+// See https://help.quickbase.com/api-guide/edit_record.html
+func (c Client) EditRecord(input *EditRecordInput) (output EditRecordOutput, err error) {
+	err = c.Do(input, &output)
+	if err == nil && output.ErrorCode != 0 {
+		err = fmt.Errorf("error executing API_EditRecord: %s (error code: %v)", output.ErrorText, output.ErrorCode)
+	}
+	return
+}
+
 // GetSchemaInput models requests sent to API_GetSchema.
 // See https://help.quickbase.com/api-guide/getschema.html
 type GetSchemaInput struct {
@@ -352,7 +409,7 @@ func (input *ImportFromCSVInput) EnsureRecords() *ImportFromCSVInputRecords {
 	return input.Records
 }
 
-// CSV sets raw CSV data,
+// CSV sets raw CSV data.
 func (input *ImportFromCSVInput) CSV(csv []byte) {
 	input.EnsureRecords().CSV = string(csv)
 }
