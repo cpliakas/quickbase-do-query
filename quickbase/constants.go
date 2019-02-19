@@ -1,17 +1,29 @@
 package quickbase
 
+// EnvVarPrefix is the environment variable prefix for configuration options.
 const EnvVarPrefix = "QUICKBASE"
 
+type ctxKey int
+
+// CtxKey contexts contain context keys.
+const (
+	CtxKeyAction ctxKey = iota
+	CtxKeyRealmHost
+)
+
+// Default* constants contain configuration defaults.
 const (
 	DefaultConfigFile = "$HOME/.config/quickbase/config"
 	DefaultTicketFile = "$HOME/.config/quickbase/ticket"
 )
 
+// FieldMode* constants contain valid Quick Base field mode settings.
 const (
 	FieldModeVirtual = "virtual"
 	FieldModeLookup  = "lookup"
 )
 
+// FieldType* constants contain valid Quick Base field types.
 const (
 	FieldTypeCheckbox        = "checkbox"
 	FieldTypeDate            = "date"
@@ -32,6 +44,7 @@ const (
 	FieldTypeUser            = "userid"
 )
 
+// FieldTypes return all valid Quick Base field types.
 func FieldTypes() []string {
 	return []string{
 		FieldTypeCheckbox,

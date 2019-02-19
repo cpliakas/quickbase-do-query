@@ -80,14 +80,14 @@ func (c Client) NewRequest(input Input) (req *http.Request, err error) {
 // unmarshals the raw response into the passed Output struct.
 func (c Client) Do(input Input, output Output) error {
 	ctx := context.Background()
-	ctx = context.WithValue(ctx, "realm-host", c.Config.RealmHost())
+	ctx = context.WithValue(ctx, CtxKeyRealmHost, c.Config.RealmHost())
 
 	req, err := c.NewRequest(input)
 	if err != nil {
 		return err
 	}
 
-	ctx = context.WithValue(ctx, "action", req.Header.Get("QUICKBASE-ACTION"))
+	ctx = context.WithValue(ctx, CtxKeyAction, req.Header.Get("QUICKBASE-ACTION"))
 	ctx = c.invokePreRequest(ctx, req)
 
 	res, err := c.HTTPClient.Do(req)

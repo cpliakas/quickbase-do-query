@@ -118,6 +118,11 @@ type StandardConfig struct {
 	viper *viper.Viper
 }
 
+// Set explicitly sets a configuration option.
+func (c *StandardConfig) Set(key string, value interface{}) {
+	c.viper.Set(key, value)
+}
+
 // AppID implements Config.AppID().
 func (c StandardConfig) AppID() string { return c.viper.GetString("app-id") }
 
