@@ -122,7 +122,7 @@ type StandardConfig struct {
 }
 
 // Set explicitly sets a configuration option.
-func (c *StandardConfig) Set(key string, value interface{}) {
+func (c StandardConfig) Set(key string, value interface{}) {
 	c.viper.Set(key, value)
 }
 
