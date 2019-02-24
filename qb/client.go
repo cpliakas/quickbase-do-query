@@ -48,7 +48,7 @@ func NewClient(cfg Config) Client {
 }
 
 // Config returns the configuration.
-func (c *Client) Config() Config { return c.config }
+func (c Client) Config() Config { return c.config }
 
 // NewRequest returns a *http.Request initialized with the data needed to
 // make a request to the Quick Base API. In this method, the credentials are
