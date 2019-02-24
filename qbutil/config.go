@@ -45,6 +45,11 @@ func NewGlobalConfig(cmd *cobra.Command, cfg *viper.Viper) GlobalConfig {
 	return GlobalConfig{viper: cfg}
 }
 
+// Set implements qb.Config.Set.
+func (c *GlobalConfig) Set(key string, value interface{}) {
+	c.viper.Set(key, value)
+}
+
 // AppID implements qb.Config.AppID.
 func (c GlobalConfig) AppID() string { return c.viper.GetString("app-id") }
 

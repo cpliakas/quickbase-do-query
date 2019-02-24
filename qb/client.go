@@ -29,7 +29,7 @@ type Plugin interface {
 type Client struct {
 
 	// config stores the runtime configuration.
-	Config Config
+	config Config
 
 	// The HTTP client to use when sending requests. Defaults to
 	// `http.DefaultClient`.
@@ -42,7 +42,7 @@ type Client struct {
 // NewClient returns a Client populated with default values.
 func NewClient(cfg Config) Client {
 	return Client{
-		Config:     cfg,
+		config:     cfg,
 		HTTPClient: http.DefaultClient,
 	}
 }
@@ -54,7 +54,7 @@ func NewClient(cfg Config) Client {
 func (c Client) NewRequest(input Input) (req *http.Request, err error) {
 
 	if i, ok := input.(AuthenticatedInput); ok {
-		i.setCredentials(NewCredentials(c.Config))
+		i.setCredentials(NewCredentials(c.config))
 		input = i
 	}
 
@@ -63,7 +63,7 @@ func (c Client) NewRequest(input Input) (req *http.Request, err error) {
 		return
 	}
 
-	url := strings.TrimRight(c.Config.RealmHost(), "/") + input.uri()
+	url := strings.TrimRight(c.config.RealmHost(), "/") + input.uri()
 	req, err = http.NewRequest(input.method(), url, bytes.NewBuffer(b))
 	if err != nil {
 		return
@@ -80,7 +80,7 @@ func (c Client) NewRequest(input Input) (req *http.Request, err error) {
 // unmarshals the raw response into the passed Output struct.
 func (c Client) Do(input Input, output Output) error {
 	ctx := context.Background()
-	ctx = context.WithValue(ctx, CtxKeyRealmHost, c.Config.RealmHost())
+	ctx = context.WithValue(ctx, CtxKeyRealmHost, c.config.RealmHost())
 
 	req, err := c.NewRequest(input)
 	if err != nil {

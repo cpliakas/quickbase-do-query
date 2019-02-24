@@ -7,6 +7,8 @@ import (
 // ClientAPI provides an interface to enable mocking the Quick Base service
 // client's API calls.
 type ClientAPI interface {
+	Config() *qb.Config
+
 	AddRecord(*qb.AddRecordInput) (qb.AddRecordOutput, error)
 	Authenticate(*qb.AuthenticateInput) (qb.AuthenticateOutput, error)
 	DoQuery(*qb.DoQueryInput) (qb.DoQueryOutput, error)

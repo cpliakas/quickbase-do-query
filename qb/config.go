@@ -12,6 +12,9 @@ import (
 // Config is the interface that contains runtime configuration.
 type Config interface {
 
+	// Set sets a configuration option.
+	Set(string, interface{})
+
 	// AppID returns the dbid of the application used by default.
 	AppID() string
 
