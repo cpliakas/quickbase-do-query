@@ -2,7 +2,7 @@ package cmd
 
 import (
 	"github.com/cpliakas/quickbase-do-query/cliutil"
-	qb "github.com/cpliakas/quickbase-do-query/quickbase"
+	"github.com/cpliakas/quickbase-do-query/qb"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )

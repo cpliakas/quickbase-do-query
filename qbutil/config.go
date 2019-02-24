@@ -6,7 +6,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/cpliakas/quickbase-do-query/cliutil"
-	"github.com/cpliakas/quickbase-do-query/quickbase"
+	"github.com/cpliakas/quickbase-do-query/qb"
 	validation "github.com/go-ozzo/ozzo-validation"
 	"github.com/go-ozzo/ozzo-validation/is"
 	"github.com/spf13/viper"
@@ -33,28 +33,28 @@ func NewGlobalConfig(cmd *cobra.Command, cfg *viper.Viper) GlobalConfig {
 	flags.PersistentString("app-id", "I", "", "application's dbid")
 	flags.PersistentString("app-token", "A", "", "app token used with ticket to to authenticate API requests")
 	flags.PersistentBool("batch", "B", false, "render output in batch mode, useful for chaining commands together")
-	flags.PersistentString("config-file", "C", quickbase.DefaultConfigFile, "path to the config file")
+	flags.PersistentString("config-file", "C", qb.DefaultConfigFile, "path to the config file")
 	flags.PersistentString("filter", "F", "", "JMESPath filter")
 	flags.PersistentBool("raw", "X", false, "return the raw output from the API call")
 	flags.PersistentString("realm-host", "R", "", "realm host, e.g., 'https://MYREALM.quickbase.com'")
 	flags.PersistentString("table-id", "t", "", "table's dbid")
 	flags.PersistentString("ticket", "T", "", "ticket used to authenticate API requests")
-	flags.PersistentString("ticket-file", "K", quickbase.DefaultTicketFile, "path to the file containing a cached ticket")
+	flags.PersistentString("ticket-file", "K", qb.DefaultTicketFile, "path to the file containing a cached ticket")
 	flags.PersistentString("user-token", "U", "", "user token used to authenticate API requests")
 
 	return GlobalConfig{viper: cfg}
 }
 
-// AppID implements quickbase.Config.AppID().
+// AppID implements qb.Config.AppID.
 func (c GlobalConfig) AppID() string { return c.viper.GetString("app-id") }
 
-// AppToken implements quickbase.Config.AppToken().
+// AppToken implements qb.Config.AppToken.
 func (c GlobalConfig) AppToken() string { return c.viper.GetString("app-token") }
 
 // Batch returns whether to render output in batch mode.
 func (c GlobalConfig) Batch() bool { return c.viper.GetBool("batch") }
 
-// ConfigFile implements quickbase.Config.ConfigFile().
+// ConfigFile implements qb.Config.ConfigFile.
 func (c GlobalConfig) ConfigFile() string { return c.viper.GetString("config-file") }
 
 // Filter returns the JMESPath filter.
@@ -63,24 +63,24 @@ func (c GlobalConfig) Filter() string { return c.viper.GetString("filter") }
 // Raw flags whether to return the raw output from the API as opposed to JSON.
 func (c GlobalConfig) Raw() bool { return c.viper.GetBool("raw") }
 
-// RealmHost implements quickbase.Config.RealmHost().
+// RealmHost implements qb.Config.RealmHost.
 func (c GlobalConfig) RealmHost() string { return c.viper.GetString("realm-host") }
 
 // TableID returns the configured table's dbid.
 func (c GlobalConfig) TableID() string { return c.viper.GetString("table-id") }
 
-// Ticket implements quickbase.Config.Ticket().
+// Ticket implements qb.Config.Ticket.
 func (c GlobalConfig) Ticket() string { return c.viper.GetString("ticket") }
 
-// TicketFile implements quickbase.Config.TicketFile().
+// TicketFile implements qb.Config.TicketFile.
 func (c GlobalConfig) TicketFile() string { return c.viper.GetString("ticket-file") }
 
-// UserToken implements quickbase.Config.UserToken().
+// UserToken implements qb.Config.UserToken.
 func (c GlobalConfig) UserToken() string { return c.viper.GetString("user-token") }
 
-// InitConfig wraps quickbase.InitConfig().
+// InitConfig wraps qb.InitConfig.
 func (c *GlobalConfig) InitConfig() error {
-	if err := quickbase.InitConfig(c.viper); err != nil {
+	if err := qb.InitConfig(c.viper); err != nil {
 		return fmt.Errorf("error reading configuration: %s", err)
 	}
 	return nil

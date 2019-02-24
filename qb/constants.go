@@ -1,4 +1,4 @@
-package quickbase
+package qb
 
 // EnvVarPrefix is the environment variable prefix for configuration options.
 const EnvVarPrefix = "QUICKBASE"

@@ -1,4 +1,4 @@
-package quickbase
+package qb
 
 import (
 	"encoding/xml"
