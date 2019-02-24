@@ -1,7 +1,7 @@
 package qbiface
 
 import (
-	qb "github.com/cpliakas/quickbase-do-query/quickbase"
+	"github.com/cpliakas/quickbase-do-query/qb"
 )
 
 // ClientAPI provides an interface to enable mocking the Quick Base service
