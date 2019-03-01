@@ -46,7 +46,7 @@ func NewGlobalConfig(cmd *cobra.Command, cfg *viper.Viper) GlobalConfig {
 }
 
 // Set implements qb.Config.Set.
-func (c *GlobalConfig) Set(key string, value interface{}) {
+func (c GlobalConfig) Set(key string, value interface{}) {
 	c.viper.Set(key, value)
 }
 
